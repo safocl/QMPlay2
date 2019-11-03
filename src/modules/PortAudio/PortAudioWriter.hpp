@@ -35,7 +35,7 @@ class PortAudioWriter final : public Writer
 public:
     PortAudioWriter(Module &);
 private:
-    ~PortAudioWriter();
+    ~PortAudioWriter() override;
 
     bool set() override;
 

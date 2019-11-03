@@ -146,7 +146,7 @@ void QMPlay2GUIClass::loadIcons()
     // drop shadow in SVG file. Remove / modify this workaround if QMPlay2 SVG icon changes!
     const QSize size(128, 128);
     const QPixmap pixmap = QIcon(":/QMPlay2.svgz").pixmap(size);
-    const qreal sizeRatio = (((qreal)pixmap.size().width()  / (qreal)size.width()) + ((qreal)pixmap.size().height() / (qreal)size.height())) / 2.0;
+    const qreal sizeRatio = ((static_cast<qreal>(pixmap.size().width())  / static_cast<qreal>(size.width())) + (static_cast<qreal>(pixmap.size().height()) / static_cast<qreal>(size.height()))) / 2.0;
     qmplay2Icon = new QIcon(Functions::applyDropShadow(pixmap, 10.0 * sizeRatio, QPointF(3.0 * sizeRatio, 3.0 * sizeRatio), QColor(0, 0, 0, 127)));
 
     groupIcon = new QIcon(getIconFromTheme("folder-orange"));
@@ -490,8 +490,8 @@ static void messageHandler(QtMsgType type, const QMessageLogContext &context, co
                     qmplay2Log = true;
                 }
                 break;
-            default:
-                break;
+//            default:
+//                break;
         }
     }
     if (!qmplay2Log)
@@ -524,8 +524,8 @@ static void checkForEGL()
     using XOpenDisplayType = void *(*)(const char *name);
     using XCloseDisplayType = int (*)(void *display);
 
-    auto XOpenDisplayFunc = (XOpenDisplayType)libX11.resolve("XOpenDisplay");
-    auto XCloseDisplayFunc = (XCloseDisplayType)libX11.resolve("XCloseDisplay");
+    auto XOpenDisplayFunc = reinterpret_cast<XOpenDisplayType>(libX11.resolve("XOpenDisplay")); // the unclear purpose of such typecasting
+    auto XCloseDisplayFunc = reinterpret_cast<XCloseDisplayType>(libX11.resolve("XCloseDisplay"));
     if (!XOpenDisplayFunc || !XCloseDisplayFunc)
         return;
 
@@ -536,11 +536,11 @@ static void checkForEGL()
     using eglQueryDisplayAttribEXTType = unsigned (*)(void *, int, void *);
     using eglTerminateType = unsigned (*)(void *);
 
-    auto eglGetProcAddress = (eglGetProcAddressType)libEGL.resolve("eglGetProcAddress");
-    auto eglGetDisplayFunc = (eglGetDisplayType)libEGL.resolve("eglGetDisplay");
-    auto eglInitializeFunc = (eglInitializeType)libEGL.resolve("eglInitialize");
-    auto eglQueryStringFunc = (eglQueryStringType)libEGL.resolve("eglQueryString");
-    auto eglTerminateFunc = (eglTerminateType)libEGL.resolve("eglTerminate");
+    auto eglGetProcAddress = reinterpret_cast<eglGetProcAddressType>(libEGL.resolve("eglGetProcAddress"));
+    auto eglGetDisplayFunc = reinterpret_cast<eglGetDisplayType>(libEGL.resolve("eglGetDisplay"));
+    auto eglInitializeFunc = reinterpret_cast<eglInitializeType>(libEGL.resolve("eglInitialize"));
+    auto eglQueryStringFunc = reinterpret_cast<eglQueryStringType>(libEGL.resolve("eglQueryString"));
+    auto eglTerminateFunc = reinterpret_cast<eglTerminateType>(libEGL.resolve("eglTerminate"));
     if (!eglGetProcAddress || !eglGetDisplayFunc || !eglInitializeFunc || !eglQueryStringFunc || !eglTerminateFunc)
         return;
 
@@ -560,8 +560,8 @@ static void checkForEGL()
             constexpr int EGLExtensions = 0x3055;
             const bool hasDeviceQuery = QByteArray(eglQueryStringFunc(nullptr, EGLExtensions)).contains("EGL_EXT_device_query");
 
-            auto eglQueryDisplayAttribEXTFunc = (eglQueryDisplayAttribEXTType)eglGetProcAddress("eglQueryDisplayAttribEXT");
-            auto eglQueryDeviceStringEXTFunc = (eglQueryStringType)eglGetProcAddress("eglQueryDeviceStringEXT");
+            auto eglQueryDisplayAttribEXTFunc = reinterpret_cast<eglQueryDisplayAttribEXTType>(eglGetProcAddress("eglQueryDisplayAttribEXT"));
+            auto eglQueryDeviceStringEXTFunc = reinterpret_cast<eglQueryStringType>(eglGetProcAddress("eglQueryDeviceStringEXT"));
 
             if (hasDeviceQuery && eglQueryDisplayAttribEXTFunc && eglQueryDeviceStringEXTFunc)
             {
@@ -743,7 +743,7 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    qsrand(time(nullptr));
+    qsrand(static_cast<uint>(time(nullptr))); // sad conversion
 
     do
     {
@@ -753,7 +753,7 @@ int main(int argc, char *argv[])
         if (help)
         {
             parser = createCmdParser(true);
-            parser->setApplicationDescription(QString("QMPlay2 - Qt Media Player 2 (%1)").arg((QString)Version::get()));
+            parser->setApplicationDescription(QString("QMPlay2 - Qt Media Player 2 (%1)").arg(static_cast<QString>(Version::get())));
             printf("%s", parser->helpText().toLocal8Bit().constData());
             fflush(stdout);
             delete parser;

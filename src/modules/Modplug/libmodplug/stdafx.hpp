@@ -70,9 +70,9 @@ typedef void VOID;
 
 static inline int8_t * GlobalAllocPtr(unsigned int, size_t size)
 {
-  int8_t * p = (int8_t *) malloc(size);
+  int8_t * p = static_cast<int8_t *>(malloc(size));
 
-  if (p != NULL) memset(p, 0, size);
+  if (p != nullptr) memset(p, 0, size);
   return p;
 }
 

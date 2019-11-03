@@ -8,6 +8,12 @@
 #ifndef __SNDFILE_H
 #define __SNDFILE_H
 
+#ifdef __GNUC__
+    #include <windef.h>
+#endif
+
+#include "stdafx.hpp"
+
 namespace QMPlay2ModPlug {
 
 #ifdef UNDER_CE
@@ -453,7 +459,7 @@ typedef struct _MODCOMMAND
 class IMixPlugin
 {
 public:
-	virtual ~IMixPlugin() {}
+	virtual ~IMixPlugin() = 0;
 	virtual int AddRef() = 0;
 	virtual int Release() = 0;
 	virtual void SaveAllParameters() = 0;
@@ -598,8 +604,8 @@ public:
 	void SetCurrentOrder(UINT nOrder);
 	void GetTitle(LPSTR s) const { lstrcpyn(s,m_szNames[0],32); }
 	LPCSTR GetTitle() const { return m_szNames[0]; }
-	UINT GetSampleName(UINT nSample,LPSTR s=NULL) const;
-	UINT GetInstrumentName(UINT nInstr,LPSTR s=NULL) const;
+	UINT GetSampleName(UINT nSample,LPSTR s=nullptr) const;
+	UINT GetInstrumentName(UINT nInstr,LPSTR s=nullptr) const;
 	UINT GetMusicSpeed() const { return m_nMusicSpeed; }
 	UINT GetMusicTempo() const { return m_nMusicTempo; }
 	DWORD GetLength(BOOL bAdjust, BOOL bTotal=FALSE);
@@ -736,9 +742,9 @@ public:
 	DWORD IsSongFinished(UINT nOrder, UINT nRow) const;
 	BOOL IsValidBackwardJump(UINT nStartOrder, UINT nStartRow, UINT nJumpOrder, UINT nJumpRow) const;
 	// Read/Write sample functions
-	signed char GetDeltaValue(signed char prev, UINT n) const { return (signed char)(prev + CompressionTable[n & 0x0F]); }
+	signed char GetDeltaValue(signed char prev, UINT n) const { return static_cast<signed char>(prev + CompressionTable[n & 0x0F]); }
 	UINT PackSample(int &sample, int next);
-	BOOL CanPackSample(LPSTR pSample, UINT nLen, UINT nPacking, BYTE *result=NULL);
+	BOOL CanPackSample(LPSTR pSample, UINT nLen, UINT nPacking, BYTE *result=nullptr);
 	UINT ReadSample(MODINSTRUMENT *pIns, UINT nFlags, LPCSTR pMemFile, DWORD dwMemLength);
 	BOOL DestroySample(UINT nSample);
 	BOOL DestroyInstrument(UINT nInstr);
@@ -760,7 +766,7 @@ public:
 	void ResetMidiCfg();
 	UINT MapMidiInstrument(DWORD dwProgram, UINT nChannel, UINT nNote);
 	BOOL ITInstrToMPT(const void *p, INSTRUMENTHEADER *penv, UINT trkvers);
-	UINT SaveMixPlugins(FILE *f=NULL, BOOL bUpdate=TRUE);
+	UINT SaveMixPlugins(FILE *f=nullptr, BOOL bUpdate=TRUE);
 	UINT LoadMixPlugins(const void *pData, UINT nLen);
 #ifndef NO_FILTER
 	DWORD CutOffToFrequency(UINT nCutOff, int flt_modifier=256) const; // [0-255] => [1-10KHz]

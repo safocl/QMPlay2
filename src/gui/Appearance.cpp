@@ -53,7 +53,7 @@ public:
     {
         return pixmap;
     }
-private:
+protected:
     void paintEvent(QPaintEvent *) override
     {
         if (!pixmap.isNull())
@@ -62,7 +62,7 @@ private:
             Functions::drawPixmap(p, pixmap, this);
         }
     }
-
+private:
     QPixmap pixmap;
 };
 

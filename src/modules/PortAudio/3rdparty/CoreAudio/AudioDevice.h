@@ -93,7 +93,7 @@ public:
     OSStatus ResetNominalSampleRate(Boolean force=false);
     OSStatus SetStreamBasicDescription(AudioStreamBasicDescription *desc);
     int CountChannels();
-    char *GetName(char *buf=NULL, UInt32 maxlen=0);
+    char *GetName(char *buf=nullptr, UInt32 maxlen=0);
 
     void SetInitialNominalSampleRate(Float64 sampleRate)
     {
@@ -110,8 +110,8 @@ public:
         return mID;
     }
 
-    static AudioDevice *GetDefaultDevice(Boolean forInput, OSStatus &err, AudioDevice *dev=NULL);
-    static AudioDevice *GetDevice(AudioDeviceID devId, Boolean forInput, AudioDevice *dev=NULL);
+    static AudioDevice *GetDefaultDevice(Boolean forInput, OSStatus &err, AudioDevice *dev=nullptr);
+    static AudioDevice *GetDevice(AudioDeviceID devId, Boolean forInput, AudioDevice *dev=nullptr);
 
 protected:
     AudioDevice(AudioDeviceID devid, bool quick, bool isInput);
@@ -121,7 +121,7 @@ protected:
     Float64 currentNominalSR;
     Float64 minNominalSR, maxNominalSR;
     UInt32 nominalSampleRates;
-    Float64 *nominalSampleRateList = NULL;
+    Float64 *nominalSampleRateList = nullptr;
     bool discreteSampleRateList;
     const AudioDeviceID mID;
     const bool mForInput;

@@ -258,7 +258,7 @@ void PlayClass::chPos(double newPos, bool updateGUI)
 {
     if (canUpdatePos)
     {
-        if (updateGUI || pos == -1.0)
+        if (updateGUI || /*pos == -1.0*/ (std::max(pos, -1.0) - std::min(pos, -1.0)) < 0.00000000000001 )
             emit updatePos(qMax(0.0, newPos));
         pos = newPos;
         lastSeekTo = SEEK_NOWHERE;
@@ -303,7 +303,7 @@ void PlayClass::seek(double pos, bool allowAccurate)
             demuxThr->seek(false);
         demuxThr->seekMutex.unlock();
     }
-    emit QMPlay2Core.seeked(pos); //Signal for MPRIS2
+    emit QMPlay2Core.seeked(static_cast<int>(pos)); //Signal for MPRIS2
     fillBufferB = true;
     if (aThr && paused)
         aThr->silence(true, true);
@@ -333,7 +333,7 @@ void PlayClass::chStream(const QString &s)
             const QStringList splitted = streamPair.split(':');
             if (splitted.count() != 2)
                 return;
-            const QMPlay2MediaType type = (QMPlay2MediaType)splitted[0].toInt();
+            const QMPlay2MediaType type = static_cast<QMPlay2MediaType>(splitted[0].toInt());
             const int stream = splitted[1].toInt();
             switch (type)
             {
@@ -454,7 +454,7 @@ void PlayClass::messageAndOSD(const QString &txt, bool onStatusBar, double durat
         osdMutex.unlock();
     }
     if (onStatusBar)
-        emit QMPlay2Core.statusBarMessage(txt, duration * 1000);
+        emit QMPlay2Core.statusBarMessage(txt, static_cast<int>(duration * 1000));
 }
 
 inline bool PlayClass::hasVideoStream()
@@ -477,7 +477,7 @@ double PlayClass::getARatio()
     if (aRatioName == "auto")
         return demuxThr->demuxer->streamsInfo().at(videoStream)->getAspectRatio();
     if (aRatioName == "sizeDep")
-        return (double)demuxThr->demuxer->streamsInfo().at(videoStream)->W / (double)demuxThr->demuxer->streamsInfo().at(videoStream)->H;
+        return static_cast<double>(demuxThr->demuxer->streamsInfo().at(videoStream)->W) / static_cast<double>(demuxThr->demuxer->streamsInfo().at(videoStream)->H);
     return aRatioName.toDouble();
 }
 inline double PlayClass::getSAR()
@@ -646,7 +646,7 @@ bool PlayClass::setAudioParams(quint8 realChannels, quint32 realSampleRate)
     if (QMPlay2Core.getSettings().getBool("ForceSamplerate"))
         srate = QMPlay2Core.getSettings().getUInt("Samplerate");
     if (QMPlay2Core.getSettings().getBool("ForceChannels"))
-        chn = QMPlay2Core.getSettings().getUInt("Channels");
+        chn = static_cast<quint8>(QMPlay2Core.getSettings().getUInt("Channels"));
     return aThr->setParams(realChannels, realSampleRate, chn, srate, QMPlay2Core.getSettings().getBool("ResamplerFirst"));
 }
 
@@ -749,12 +749,12 @@ void PlayClass::setAB()
 {
     if (demuxThr && demuxThr->isDemuxerReady() && demuxThr->canSeek())
     {
-        const int intPos = pos;
+        const int intPos = static_cast<int>(pos);
         if (seekA < 0.0)
             seekA = intPos;
         else if (seekB < 0.0)
         {
-            if (seekA != intPos)
+            if (/*seekA != intPos*/ (std::max(seekA, static_cast<double>(intPos)) - std::min(seekA, static_cast<double>(intPos))) > 0.0000000000001 )
                 seekB = intPos;
         }
         else
@@ -838,7 +838,7 @@ void PlayClass::otherReset()
 void PlayClass::aRatio()
 {
     aRatioName = sender()->objectName();
-    QString msg_txt = tr("Aspect ratio") + ": " + ((QAction *)sender())->text().remove('&');
+    QString msg_txt = tr("Aspect ratio") + ": " + (static_cast<QAction *>(sender())->text().remove('&'));
     if (hasVideoStream())
     {
         const double aspect_ratio = getARatio();
@@ -865,7 +865,7 @@ void PlayClass::toggleMute()
 {
     muted = !muted;
     if (!muted)
-        volume(vol[0] * 100, vol[1] * 100);
+        volume(static_cast<int>(vol[0] * 100), static_cast<int>(vol[1] * 100));
     else
     {
         messageAndOSD(tr("Muted sound"));

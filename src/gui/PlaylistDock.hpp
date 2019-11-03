@@ -20,6 +20,7 @@
 
 #include <DockWidget.hpp>
 #include <RepeatMode.hpp>
+#include "LineEdit.hpp"
 
 class QTreeWidgetItem;
 class PlaylistWidget;
@@ -49,7 +50,7 @@ public:
 
     inline QWidget *findEdit() const
     {
-        return (QWidget *)findE;
+        return static_cast<QWidget *>(findE);
     }
 private:
     void expandTree(QTreeWidgetItem *);

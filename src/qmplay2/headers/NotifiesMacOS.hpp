@@ -26,7 +26,7 @@ class NotifiesMacOS final : public Notifies
 {
 public:
     NotifiesMacOS();
-    ~NotifiesMacOS();
+    ~NotifiesMacOS() override;
 
 private:
     bool doNotify(const QString &title, const QString &message, const int ms, const QPixmap &pixmap, const int iconId) override;

@@ -29,9 +29,9 @@ public:
     {
         if (l == w)
         {
-            l = QPoint(l.x(), l.y());
-            w = QPoint(w.x(), w.y());
-            s = QPoint(s.x(), s.y());
+            l = QPoint(static_cast<int>(l.x()), static_cast<int>(l.y()));
+            w = QPoint(static_cast<int>(w.x()), static_cast<int>(w.y()));
+            s = QPoint(static_cast<int>(s.x()), static_cast<int>(s.y()));
         }
     }
 };
@@ -42,9 +42,9 @@ public:
     {
         if (l == w)
         {
-            l = QPoint(l.x(), l.y());
-            w = QPoint(w.x(), w.y());
-            s = QPoint(s.x(), s.y());
+			l = QPoint(static_cast<int>(l.x()), static_cast<int>(l.y()));
+            w = QPoint(static_cast<int>(w.x()), static_cast<int>(w.y()));
+            s = QPoint(static_cast<int>(s.x()), static_cast<int>(s.y()));
         }
     }
 };
@@ -61,7 +61,7 @@ bool EventFilterWorkarounds::eventFilter(QObject *watched, QEvent *event)
 {
     if (watched->isWindowType())
     {
-        QWindow *win = (QWindow *)watched;
+        QWindow *win = static_cast<QWindow *>(watched);
         if (win->devicePixelRatio() > 1.0)
         {
             switch (event->type())

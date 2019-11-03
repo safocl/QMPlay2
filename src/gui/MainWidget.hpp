@@ -49,7 +49,7 @@ class MainWidget final : public QMainWindow
     Q_OBJECT
 public:
     MainWidget(QList<QPair<QString, QString>> &argument);
-    ~MainWidget();
+    ~MainWidget() override;
 private slots:
     void detachFromPipe();
 

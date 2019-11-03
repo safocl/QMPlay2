@@ -28,6 +28,8 @@
 #include <Demuxer.hpp>
 #include <Decoder.hpp>
 #include <Reader.hpp>
+#include "AudioThr.hpp"
+#include "VideoThr.hpp"
 
 #include <QCryptographicHash>
 #include <QCoreApplication>
@@ -137,9 +139,10 @@ void DemuxerThr::seek(bool doDemuxerSeek)
 {
     if (!doDemuxerSeek && skipBufferSeek)
         return;
-    if (playC.seekTo >= 0.0 || (playC.seekTo == SEEK_STREAM_RELOAD || playC.seekTo == SEEK_REPEAT))
+    if (playC.seekTo >= 0.0 || (/*playC.seekTo == SEEK_STREAM_RELOAD*/ std::max(playC.seekTo, static_cast<double>(SEEK_STREAM_RELOAD)) - std::min(playC.seekTo, static_cast<double>(SEEK_STREAM_RELOAD)) < 0.0000000000001 ||
+								/*playC.seekTo == SEEK_REPEAT*/ std::max(playC.seekTo, static_cast<double>(SEEK_REPEAT)) - std::min(playC.seekTo, static_cast<double>(SEEK_REPEAT)) < 0.0000000000001 ))
     {
-        AVThread *aThr = (AVThread *)playC.aThr, *vThr = (AVThread *)playC.vThr;
+//		AVThread *aThr = (AVThread *)playC.aThr, *vThr = (AVThread *)playC.vThr;
 
         emit playC.chText(tr("Seeking"));
         playC.canUpdatePos = false;
@@ -147,12 +150,12 @@ void DemuxerThr::seek(bool doDemuxerSeek)
         bool repeat = false;
 
         bool seekInBuffer = !skipBufferSeek;
-        if (playC.seekTo == SEEK_STREAM_RELOAD) //po zmianie strumienia audio, wideo lub napisów lub po ponownym uruchomieniu odtwarzania
+        if (std::max(playC.seekTo, static_cast<double>(SEEK_STREAM_RELOAD)) - std::min(playC.seekTo, static_cast<double>(SEEK_STREAM_RELOAD)) < 0.0000000000001) //po zmianie strumienia audio, wideo lub napisów lub po ponownym uruchomieniu odtwarzania
         {
             playC.seekTo = qMax(0.0, playC.pos);
             seekInBuffer = false;
         }
-        else if (playC.seekTo == SEEK_REPEAT)
+        else if (std::max(playC.seekTo, static_cast<double>(SEEK_REPEAT)) - std::min(playC.seekTo, static_cast<double>(SEEK_REPEAT)) < 0.0000000000001)
         {
             playC.seekTo = 0.0;
             repeat = true;
@@ -160,7 +163,7 @@ void DemuxerThr::seek(bool doDemuxerSeek)
 
         const bool stepBackwards = (playC.allowAccurateSeek && playC.nextFrameB);
 
-        const Qt::CheckState accurateSeek = (Qt::CheckState)QMPlay2Core.getSettings().getInt("AccurateSeek");
+        const Qt::CheckState accurateSeek = static_cast<Qt::CheckState>(QMPlay2Core.getSettings().getInt("AccurateSeek"));
         const bool doAccurateSeek = (accurateSeek == Qt::Checked || (accurateSeek == Qt::PartiallyChecked && (!localStream || playC.allowAccurateSeek)) || stepBackwards);
 
         const bool backward = doAccurateSeek || repeat || (playC.seekTo < playC.pos);
@@ -201,10 +204,10 @@ void DemuxerThr::seek(bool doDemuxerSeek)
                 doDemuxerSeek = false;
                 flush = true;
                 ensureTrueUpdateBuffered();
-                if (aThr)
-                    aLocked = aThr->lock();
-                if (vThr)
-                    vLocked = vThr->lock();
+                if (playC.aThr != nullptr)
+                    aLocked = playC.aThr->lock();
+                if (playC.vThr != nullptr)
+                    vLocked = playC.vThr->lock();
             }
             else
             {
@@ -249,10 +252,10 @@ void DemuxerThr::seek(bool doDemuxerSeek)
                 clearBuffers();
             else
                 playC.flushAssEvents();
-            if (!aLocked && aThr)
-                aLocked = aThr->lock();
-            if (!vLocked && vThr)
-                vLocked = vThr->lock();
+            if (!aLocked && playC.aThr != nullptr)
+                aLocked = playC.aThr->lock();
+            if (!vLocked && playC.vThr != nullptr)
+                vLocked = playC.vThr->lock();
             playC.skipAudioFrame = playC.audio_current_pts = 0.0;
             playC.flushVideo = playC.flushAudio = true;
             if (playC.pos < 0.0) //skok po rozpoczęciu odtwarzania po uruchomieniu programu
@@ -260,20 +263,20 @@ void DemuxerThr::seek(bool doDemuxerSeek)
             if (repeat || playC.videoSeekPos > -1.0 || playC.audioSeekPos > -1.0)
                 playC.emptyBufferCond.wakeAll(); //Wake AV threads
             const double seekPos = (doAccurateSeek && playC.seekTo > 0.0) ? playC.seekTo : -1.0;
-            if (vThr)
+            if (playC.vThr)
                 playC.videoSeekPos = seekPos;
-            if (aThr)
+            if (playC.aThr)
                 playC.audioSeekPos = seekPos;
             if (aLocked)
-                aThr->unlock();
+                playC.aThr->unlock();
             if (vLocked)
-                vThr->unlock();
+                playC.vThr->unlock();
         }
 
         if (!skipBufferSeek)
         {
             playC.canUpdatePos = true;
-            if (playC.seekTo != SEEK_REPEAT) //Don't reset variable if repeat seek failed
+            if (/*playC.seekTo != SEEK_REPEAT*/ std::max(playC.seekTo, static_cast<double>(SEEK_REPEAT)) - std::min(playC.seekTo, static_cast<double>(SEEK_REPEAT)) > 0.0000000000001 ) //Don't reset variable if repeat seek failed
                 playC.seekTo = SEEK_NOWHERE;
             if (playC.paused)
             {
@@ -402,15 +405,15 @@ void DemuxerThr::run()
         playC.replayGain = 1.0;
     else
     {
-        playC.replayGain = pow(10.0, gain_db / 20.0) * pow(10.0, QMPlay2Core.getSettings().getDouble("ReplayGain/Preamp") / 20.0);
-        if (QMPlay2Core.getSettings().getBool("ReplayGain/PreventClipping") && peak * playC.replayGain > 1.0)
-            playC.replayGain = 1.0 / peak;
+        playC.replayGain = static_cast<double>(std::pow(static_cast<long double>(10.0), static_cast<long double>(gain_db) / static_cast<long double>(20.0)) * std::pow(static_cast<long double>(10.0), static_cast<long double>(QMPlay2Core.getSettings().getDouble("ReplayGain/Preamp")) / static_cast<long double>(20.0)));
+        if (QMPlay2Core.getSettings().getBool("ReplayGain/PreventClipping") && static_cast<double>(peak) * playC.replayGain > 1.0)
+            playC.replayGain = static_cast<double>( 1.0f / peak );
     }
 
     if ((unknownLength = demuxer->length() < 0.0))
         updateBufferedSeconds = false;
 
-    emit playC.updateLength(round(demuxer->length()));
+    emit playC.updateLength(static_cast<int>( std::round(static_cast<long double>(demuxer->length())) ) );
     emit playC.chText(tr("Playback"));
     emit playC.playStateChanged(true);
 
@@ -456,19 +459,19 @@ void DemuxerThr::run()
         {
             QMutexLocker seekLocker(&seekMutex);
             seek(true);
-            if (playC.seekTo == SEEK_REPEAT)
+            if (std::max(playC.seekTo, static_cast<double>(SEEK_REPEAT)) - std::min(playC.seekTo, static_cast<double>(SEEK_REPEAT)) > 0.0000000000001)
                 break; //Repeat seek failed - break.
         }
 
-        AVThread *aThr = (AVThread *)playC.aThr, *vThr = (AVThread *)playC.vThr;
+//		AVThread *aThr = (AVThread *)playC.aThr, *vThr = (AVThread *)playC.vThr;
 
-        checkReadyWrite(aThr);
-        checkReadyWrite(vThr);
+        checkReadyWrite(playC.aThr);
+        checkReadyWrite(playC.vThr);
 
         if (demuxer.isAborted() || err)
             break;
 
-        if (vThr && vThr->hasDecoderError())
+        if (playC.vThr && playC.vThr->hasDecoderError())
         {
             playC.videoDecodersError.insert(playC.videoDecoderModuleName);
             playC.reload = playC.videoDecErrorLoad = true;
@@ -489,7 +492,7 @@ void DemuxerThr::run()
 
         const bool updateBuffered = localStream ? false : canUpdateBuffered();
         const double remainingDuration = getAVBuffersSize(vS, aS);
-        if (playC.endOfStream && !vS && !aS && canBreak(aThr, vThr))
+        if (playC.endOfStream && !vS && !aS && canBreak(playC.aThr, playC.vThr))
         {
             if (!stillImage)
             {
@@ -563,7 +566,7 @@ void DemuxerThr::run()
                     loadError = true;
                     break;
                 }
-                if (playC.seekTo == SEEK_STREAM_RELOAD)
+                if (std::max(playC.seekTo, static_cast<double>(SEEK_STREAM_RELOAD)) - std::min(playC.seekTo, static_cast<double>(SEEK_STREAM_RELOAD)) < 0.0000000000001)
                     break;
                 if (!first)
                     msleep(15);
@@ -592,7 +595,7 @@ void DemuxerThr::run()
             if (mustReloadStreams() && !load())
                 break;
 
-            if (streamIdx < 0 || playC.seekTo == SEEK_STREAM_RELOAD)
+            if (streamIdx < 0 || std::max(playC.seekTo, static_cast<double>(SEEK_STREAM_RELOAD)) - std::min(playC.seekTo, static_cast<double>(SEEK_STREAM_RELOAD)) < 0.0000000000001)
                 continue;
 
             if (streamIdx == playC.audioStream)
@@ -609,7 +612,7 @@ void DemuxerThr::run()
         {
             getAVBuffersSize(vS, aS);
             playC.endOfStream = true;
-            if (vS || aS || !canBreak(aThr, vThr))
+            if (vS || aS || !canBreak(playC.aThr, playC.vThr))
             {
                 if (!localStream)
                     ensureTrueUpdateBuffered();
@@ -629,7 +632,7 @@ void DemuxerThr::run()
         }
     }
 
-    emit QMPlay2Core.updatePlaying(false, title, artist, album, round(demuxer->length()), false, updatePlayingName);
+    emit QMPlay2Core.updatePlaying(false, title, artist, album, static_cast<int>(std::round(static_cast<long double>(demuxer->length()))), false, updatePlayingName);
 
     playC.endOfStream = playC.canUpdatePos = false; //to musi tu być!
     end();
@@ -711,7 +714,7 @@ void DemuxerThr::updateCoverAndPlaying(bool doCompare)
         if (showCovers)
             loadImage();
         emitInfo();
-        emit QMPlay2Core.updatePlaying(true, title, artist, album, round(demuxer->length()), showCovers && !hasCover, updatePlayingName, lyrics);
+        emit QMPlay2Core.updatePlaying(true, title, artist, album, static_cast<int>(std::round(static_cast<long double>(demuxer->length()))), showCovers && !hasCover, updatePlayingName, lyrics);
     }
 }
 
@@ -890,7 +893,7 @@ void DemuxerThr::emitInfo()
                     videoStreams += "<a style='text-decoration: none; color: black;' href='stream:video" + QString::number(i) + "'>";
                 videoStreams += "<b>" + tr("Stream") + " " + QString::number(++videoStreamCount) + "</b>";
                 if (currentPlaying)
-                    videoStreams += "</u>" + getWriterName((AVThread *)playC.vThr);
+                    videoStreams += "</u>" + getWriterName(playC.vThr);
                 else
                     videoStreams += "</a>";
                 videoStreams += "</li><ul>";
@@ -900,7 +903,7 @@ void DemuxerThr::emitInfo()
                     videoStreams += "<li><b>" + tr("codec") + ":</b> " + streamInfo->codec_name + "</li>";
                 videoStreams += "<li><b>" + tr("size") + ":</b> " + QString::number(streamInfo->W) + "x" + QString::number(streamInfo->H) + "</li>";
                 videoStreams += "<li><b>" + tr("aspect ratio") + ":</b> " + QString::number(streamInfo->getAspectRatio()) + "</li>";
-                if (streamInfo->FPS)
+                if (static_cast<bool>(streamInfo->FPS))
                     videoStreams += "<li><b>" + tr("FPS") + ":</b> " + QString::number(streamInfo->FPS) + "</li>";
                 if (streamInfo->bitrate)
                     videoStreams += "<li><b>" + tr("bitrate") + ":</b> " + QString::number(streamInfo->bitrate / 1000) + "kbps</li>";
@@ -922,7 +925,7 @@ void DemuxerThr::emitInfo()
                     audioStreams += "<a style='text-decoration: none; color: black;' href='stream:audio" + QString::number(i) + "'>";
                 audioStreams += "<b>" + tr("Stream") + " " + QString::number(++audioStreamCount) + "</b>";
                 if (currentPlaying)
-                    audioStreams += "</u>" + getWriterName((AVThread *)playC.aThr);
+                    audioStreams += "</u>" + getWriterName(playC.aThr);
                 else
                     audioStreams += "</a>";
                 audioStreams += "</li><ul>";
@@ -956,7 +959,7 @@ void DemuxerThr::emitInfo()
             case QMPLAY2_TYPE_ATTACHMENT:
             {
                 attachmentStreams += "<ul style='margin-top: 0px; margin-bottom: 0px;'>";
-                attachmentStreams += "<li><b>" + streamInfo->title + "</b> - " + Functions::sizeString(streamInfo->data.size()) + "</li>";
+                attachmentStreams += "<li><b>" + streamInfo->title + "</b> - " + Functions::sizeString(static_cast<quint64>(streamInfo->data.size())) + "</li>";
                 attachmentStreams += "</ul>";
             } break;
             default:
@@ -1064,15 +1067,15 @@ BufferInfo DemuxerThr::getBufferInfo(bool clearBackwards)
         bufferInfo.backwardDuration  = playC.vPackets.backwardDuration();
         bufferInfo.remainingDuration = playC.vPackets.remainingDuration();
 
-        bufferInfo.firstPacketTime = floor(playC.vPackets.firstPacketTime());
-        bufferInfo.lastPacketTime  = ceil (playC.vPackets.lastPacketTime() );
+        bufferInfo.firstPacketTime = static_cast<qint32>(std::floor(static_cast<long double>(playC.vPackets.firstPacketTime())));
+        bufferInfo.lastPacketTime  = static_cast<qint32>(std::ceil (static_cast<long double>(playC.vPackets.lastPacketTime() )));
     }
 
     if (clearBackwards)
         playC.aPackets.clearBackwards();
     if (!playC.aPackets.isEmpty())
     {
-        const qint32 firstAPacketTime = floor(playC.aPackets.firstPacketTime()), lastAPacketTime = ceil(playC.aPackets.lastPacketTime());
+        const qint32 firstAPacketTime = static_cast<qint32>(std::floor(static_cast<long double>(playC.aPackets.firstPacketTime()))), lastAPacketTime = static_cast<qint32>(std::ceil(static_cast<long double>(playC.aPackets.lastPacketTime())));
 
         bufferInfo.backwardBytes  += playC.aPackets.backwardBytes();
         bufferInfo.remainingBytes += playC.aPackets.remainingBytes();

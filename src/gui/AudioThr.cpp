@@ -32,8 +32,8 @@
 
 #include <cmath>
 
-AudioThr::AudioThr(PlayClass &playC, const QStringList &pluginsName) :
-    AVThread(playC, "audio:", nullptr, pluginsName)
+AudioThr::AudioThr(PlayClass & __playC, const QStringList &pluginsName) :
+    AVThread(__playC, "audio:", nullptr, pluginsName)
 {
     for (QMPlay2Extensions *QMPlay2Ext : QMPlay2Extensions::QMPlay2ExtensionsList())
         if (QMPlay2Ext->isVisualization())
@@ -90,7 +90,7 @@ bool AudioThr::setParams(uchar realChn, uint realSRate, uchar chn, uint sRate, b
     {
         if (paramsCorrected)
         {
-            const uchar lastChn = channels;
+            const uint lastChn = channels;
             const uint lastSRate = sample_rate;
             channels = writer->getParam("chn").toUInt();
             sample_rate = writer->getParam("rate").toUInt();
@@ -124,7 +124,7 @@ bool AudioThr::setParams(uchar realChn, uint realSRate, uchar chn, uint sRate, b
 
 void AudioThr::silence(bool invert, bool fromPause)
 {
-    if (QMPlay2Core.getSettings().getBool("Silence") && (!fromPause || playC.frame_last_pts <= 0.0) && doSilence == -1.0 && isRunning() && (invert || !playC.paused))
+    if (QMPlay2Core.getSettings().getBool("Silence") && (!fromPause || playC.frame_last_pts < 0.0000000000000001) && /*doSilence == -1.0*/ (std::max<double>(static_cast<double>(doSilence), -1.0) - std::min(static_cast<double>(doSilence) , -1.0) < 0.0000000000001) && isRunning() && (invert || !playC.paused)) // "doSilence == -1.0" is bad comparing float type -- need to compare < or > necessary value
     {
         playC.doSilenceBreak = false;
         allowAudioDrain |= !invert;
@@ -157,7 +157,8 @@ void AudioThr::silence(bool invert, bool fromPause)
                 silenceChMutex.unlock();
             }
             silenceChMutex.lock();
-            if (lastDoSilence == doSilence)
+			
+            if (/*lastDoSilence == doSilence*/ ( std::max(static_cast<double>(doSilence), lastDoSilence) - std::min(static_cast<double>(doSilence), lastDoSilence) ) < 0.0000000000001 ) // "doSilence == -1.0" is bad comparing float type -- need to compare < or > necessary value
             {
                 doSilence = -1.0;
                 silenceChMutex.unlock();
@@ -175,7 +176,8 @@ void AudioThr::run()
     QMutex emptyBufferMutex;
     bool paused = false;
     bool oneFrame = false;
-    tmp_br = tmp_time = 0;
+	tmp_time = 0;
+    tmp_br = 0;
 #ifdef Q_OS_WIN
     canUpdatePos = canUpdateBitrate = false;
 #endif
@@ -201,7 +203,8 @@ void AudioThr::run()
 #ifdef Q_OS_WIN
                 canUpdatePos = canUpdateBitrate = false;
 #endif
-                tmp_br = tmp_time = 0;
+				tmp_time = 0;
+				tmp_br = 0;
                 if (playC.paused && !paused)
                 {
                     doSilence = -1.0;
@@ -274,8 +277,9 @@ void AudioThr::run()
 #ifdef Q_OS_WIN
                 canUpdateBitrate = true;
 #else
-                emit playC.updateBitrateAndFPS(round((tmp_br << 3) / tmp_time), -1);
-                tmp_br = tmp_time = 0;
+                emit playC.updateBitrateAndFPS(static_cast<int>(std::round(static_cast<float>(static_cast<double>( tmp_br << 3) / tmp_time))), -1);
+				tmp_time = 0;
+				tmp_br = 0;
 #endif
             }
 
@@ -301,8 +305,8 @@ void AudioThr::run()
             while (decodedSize > 0 && (!playC.paused || oneFrame) && !br && !br2)
             {
                 const double max_len = 0.02; //TODO: zrobić opcje?
-                const int chunk = qMin(decodedSize, (int)(ceil(currentSampleRate() * max_len) * currentChannels() * sizeof(float)));
-                float vol[2] = {0.0f, 0.0f};
+                const int chunk = qMin(decodedSize, static_cast<int>(std::ceil(static_cast<long double>(currentSampleRate() * max_len)) * currentChannels() * sizeof(float)));
+                double vol[2] = {0.0, 0.0};
                 if (!playC.muted)
                 {
                     const auto getVolume = [this](double vol) {
@@ -327,12 +331,12 @@ void AudioThr::run()
                 if (isMuted)
                     decodedChunk.fill(0, chunk);
                 else
-                    decodedChunk = QByteArray::fromRawData((const char *)decoded.constData() + decodedPos, chunk);
+                    decodedChunk = QByteArray::fromRawData(reinterpret_cast<const char *>(decoded.constData()) + decodedPos, chunk); // casting unsinged to signed  :(
 
                 decodedPos += chunk;
                 decodedSize -= chunk;
 
-                playC.audio_last_delay = (double)decodedChunk.size() / (double)(sizeof(float) * currentChannels() * currentSampleRate());
+                playC.audio_last_delay = static_cast<double>(decodedChunk.size()) / static_cast<double>(sizeof(float) * static_cast<double>(currentChannels()) * static_cast<double>(currentSampleRate()));
                 if (packet.ts.isValid())
                 {
                     audio_pts = playC.audio_current_pts = packet.ts - delay;
@@ -371,18 +375,18 @@ void AudioThr::run()
                 if (playC.skipAudioFrame <= 0.0 || oneFrame)
                 {
                     const double speed = playC.speed;
-                    if (speed != lastSpeed)
+                    if ((std::max(speed, lastSpeed) - std::min(speed, lastSpeed)) < 0.0000000000001)
                     {
                         resampler_create();
                         lastSpeed = speed;
                     }
 
-                    if (!isMuted && (!qFuzzyCompare(vol[0], 1.0f) || !qFuzzyCompare(vol[1], 1.0f)))
+                    if (!isMuted && (!qFuzzyCompare(static_cast<float>(vol[0]), 1.0f) || !qFuzzyCompare(static_cast<float>(vol[1]), 1.0f)))
                     {
-                        const int size = decodedChunk.size() / sizeof(float);
-                        float *data = (float *)decodedChunk.data();
-                        for (int i = 0; i < size; ++i)
-                            data[i] *= vol[i & 1];
+                        const unsigned long size = static_cast<unsigned long>(decodedChunk.size()) / sizeof(float);
+                        char *data = decodedChunk.data();
+                        for (unsigned long i = 0; i < size; ++i)
+                            data[i] = static_cast<char>(static_cast<double>(data[i]) * vol[i & 1]);
                     }
 
                     for (QMPlay2Extensions *vis : asConst(visualizations))
@@ -401,12 +405,12 @@ void AudioThr::run()
                             doSilence = -1.0;
                         if (doSilence >= 0.0)
                         {
-                            float *data = (float *)dataToWrite.data();
-                            const int s = dataToWrite.size() / sizeof(float);
-                            for (int i = 0; i < s; i += channels)
+                            char *data = dataToWrite.data();
+                            const unsigned int s = static_cast<unsigned int>(dataToWrite.size()) / sizeof(float);
+                            for (unsigned int i = 0; i < s; i += channels)
                             {
-                                for (int j = 0; j < channels; ++j)
-                                    data[i+j] *= doSilence;
+                                for (unsigned int j = 0; j < channels; ++j)
+                                    data[i+j] = static_cast<char>(static_cast<double>(data[i+j]) * doSilence);
                                 doSilence -= silence_step;
                                 if (doSilence < 0.0)
                                     doSilence = 0.0;
@@ -440,7 +444,7 @@ bool AudioThr::resampler_create()
     const double speed = playC.speed > 0.0 ? playC.speed : 1.0;
     if (realSample_rate != sample_rate || realChannels != channels || speed != 1.0)
     {
-        const bool OK = sndResampler.create(realSample_rate, realChannels, sample_rate / speed, channels);
+        const bool OK = sndResampler.create(static_cast<int>(realSample_rate), realChannels, static_cast<int>(static_cast<double>(sample_rate) / speed), static_cast<int>(channels));
         if (!OK)
             QMPlay2Core.logError(tr("Error during initialization") + ": " + sndResampler.name());
         return OK;
@@ -451,7 +455,7 @@ bool AudioThr::resampler_create()
 
 inline uchar AudioThr::currentChannels() const
 {
-    return m_resamplerFirst ? channels : realChannels;
+    return m_resamplerFirst ? static_cast<uchar>(channels) : realChannels;
 }
 inline uint AudioThr::currentSampleRate() const
 {

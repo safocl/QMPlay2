@@ -94,7 +94,7 @@ VideoAdjustmentW::VideoAdjustmentW()
 
     QPushButton *resetB = new QPushButton(tr("Reset"));
     connect(resetB, &QPushButton::clicked, this, [this] {
-        for (int i = 0; i < CONTROLS_COUNT; ++i)
+        for (unsigned i = 0; i < CONTROLS_COUNT; ++i)
             m_sliders[i]->setValue(0);
     });
 
@@ -111,18 +111,18 @@ VideoAdjustmentW::~VideoAdjustmentW()
 
 void VideoAdjustmentW::restoreValues()
 {
-    for (int i = 0; i < CONTROLS_COUNT; ++i)
+    for (unsigned i = 0; i < CONTROLS_COUNT; ++i)
         m_sliders[i]->setValue(QMPlay2Core.getSettings().getInt(QString("VideoAdjustment/") + g_controlsNames[i]));
 }
 void VideoAdjustmentW::saveValues()
 {
-    for (int i = 0; i < CONTROLS_COUNT; ++i)
+    for (unsigned i = 0; i < CONTROLS_COUNT; ++i)
         QMPlay2Core.getSettings().set(QString("VideoAdjustment/") + g_controlsNames[i], m_sliders[i]->value());
 }
 
 void VideoAdjustmentW::setModuleParam(ModuleParams *writer)
 {
-    for (int i = 0; i < CONTROLS_COUNT; ++i)
+    for (unsigned i = 0; i < CONTROLS_COUNT; ++i)
     {
         m_sliders[i]->setEnabled(writer->hasParam(g_controlsNames[i]));
         writer->modParam(g_controlsNames[i], m_sliders[i]->value());
@@ -131,7 +131,7 @@ void VideoAdjustmentW::setModuleParam(ModuleParams *writer)
 
 void VideoAdjustmentW::enableControls()
 {
-    for (int i = 0; i < CONTROLS_COUNT; ++i)
+    for (unsigned i = 0; i < CONTROLS_COUNT; ++i)
         m_sliders[i]->setEnabled(true);
 }
 
@@ -164,9 +164,9 @@ void VideoAdjustmentW::setKeyShortcuts()
 }
 void VideoAdjustmentW::addActionsToWidget(QWidget *w)
 {
-    for (int i = 0; i < CONTROLS_COUNT; ++i)
+    for (unsigned i = 0; i < CONTROLS_COUNT; ++i)
     {
-        for (int j = 0; j < 2; ++j)
+        for (unsigned j = 0; j < 2; ++j)
             w->addAction(m_actions[i][j]);
     }
     w->addAction(m_resetAction);

@@ -33,7 +33,7 @@ class AudioThr final : public AVThread
     Q_OBJECT
 public:
     AudioThr(PlayClass &, const QStringList &pluginsName = {});
-    ~AudioThr();
+    ~AudioThr() override;
 
     void stop(bool terminate = false) override;
     void clearVisualizations();
@@ -59,8 +59,8 @@ private:
 #endif
 
     SndResampler sndResampler;
-    uchar realChannels, channels;
-    uint  realSample_rate, sample_rate;
+    uchar realChannels;
+    uint  realSample_rate, sample_rate, channels;
     bool m_resamplerFirst;
     double lastSpeed;
 

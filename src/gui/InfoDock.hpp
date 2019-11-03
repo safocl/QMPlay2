@@ -50,7 +50,7 @@ private:
     void setLabelValues();
     void setBufferLabel();
 
-    QWidget mainW;
+    QWidget *mainW;
     QGridLayout *layout;
     QLabel *bitrateAndFPS, *buffer;
     TextEdit *infoE;

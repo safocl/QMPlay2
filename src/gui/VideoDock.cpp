@@ -159,7 +159,7 @@ void VideoDock::unsetCursor(QWidget *w)
     bool ok;
     const int cursorShape = w->property("customCursor").toInt(&ok);
     if (ok && cursorShape >= 0 && cursorShape <= Qt::LastCursor)
-        w->setCursor((Qt::CursorShape)cursorShape);
+        w->setCursor(static_cast<Qt::CursorShape>(cursorShape));
     else
         w->setCursor(Qt::ArrowCursor);
 }
@@ -320,7 +320,7 @@ bool VideoDock::event(QEvent *e)
             touchEnded = true;
             break;
         case QEvent::Gesture:
-            if (QPinchGesture *pinch = (QPinchGesture *)((QGestureEvent *)e)->gesture(Qt::PinchGesture))
+            if (QPinchGesture *pinch = static_cast<QPinchGesture *>((static_cast<QGestureEvent *>(e))->gesture(Qt::PinchGesture)))
             {
                 if (pinch->state() == Qt::GestureStarted)
                     touchZoom = 0.0;

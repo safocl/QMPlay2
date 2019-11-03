@@ -83,7 +83,7 @@ using Functions::timeToStr;
 class MainWidgetTmpStyle final : public QCommonStyle
 {
 public:
-    ~MainWidgetTmpStyle() = default;
+    ~MainWidgetTmpStyle() override = default;
 
     int pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const override
     {
@@ -665,7 +665,7 @@ void MainWidget::actionSeek()
         if (max > 0)
         {
             const int count = 50;
-            const int pos = qMax<qint64>(0, seekTo * count / max);
+            const long long pos = qMax<qint64>(0, static_cast<qint64>(seekTo * count / max));
             QByteArray osd_pos = "[";
             for (int i = 0; i < count; i++)
                 osd_pos += (i == pos) ? "|" : "-";
@@ -710,7 +710,7 @@ void MainWidget::resetSpherical()
 
 void MainWidget::visualizationFullScreen()
 {
-    QWidget *senderW = (QWidget *)sender();
+    QWidget *senderW = static_cast<QWidget *>(sender());
     const auto maybeGoFullScreen = [this, senderW] {
         if (!fullScreen)
         {
@@ -1191,7 +1191,7 @@ void MainWidget::showMessage(const QString &msg, const QString &title, int messa
     if (ms < 1 || !Notifies::notify(title, msg, ms, messageIcon))
     {
         QMessageBox *messageBox = new QMessageBox(this);
-        messageBox->setIcon((QMessageBox::Icon)messageIcon);
+        messageBox->setIcon(static_cast<QMessageBox::Icon>(messageIcon));
         messageBox->setStandardButtons(QMessageBox::Ok);
         messageBox->setAttribute(Qt::WA_DeleteOnClose);
         messageBox->setInformativeText(msg);
@@ -1324,7 +1324,7 @@ void MainWidget::updatePos(double pos)
     static int currPos;
     if (!playC.isPlaying() || playC.canUpdatePosition())
     {
-        const int intPos = pos;
+        const int intPos = static_cast<int>(pos);
         if (pos <= 0.0 || currPos != intPos)
         {
             const double max = seekS->maximum() / 10.0;
@@ -1333,7 +1333,7 @@ void MainWidget::updatePos(double pos)
             emit QMPlay2Core.posChanged(intPos);
             currPos = intPos;
         }
-        seekS->setValue(pos * 10.0);
+        seekS->setValue(static_cast<int>(pos * 10.0));
 #ifdef Q_OS_WIN
         if (m_taskBarProgress)
             m_taskBarProgress->setValue(pos);
@@ -1352,7 +1352,7 @@ void MainWidget::newConnection(IPCSocket *socket)
 }
 void MainWidget::readSocket()
 {
-    IPCSocket *socket = (IPCSocket *)sender();
+    IPCSocket *socket = static_cast<IPCSocket *>(sender());
     disconnect(socket, SIGNAL(aboutToClose()), socket, SLOT(deleteLater()));
     for (const QByteArray &arr : socket->readAll().split('\0'))
     {
@@ -1617,8 +1617,8 @@ void MainWidget::mouseMoveEvent(QMouseEvent *e)
 {
     if ((fullScreen || isCompactView) && (e->buttons() == Qt::NoButton || videoDock->isTouch))
     {
-        const int trigger1 = qMax<int>( 5, ceil(0.003 * (videoDock->isTouch ? 8 : 1) * width()));
-        const int trigger2 = qMax<int>(15, ceil(0.025 * (videoDock->isTouch ? 4 : 1) * width()));
+        const int trigger1 = qMax<int>( 5, static_cast<int>(ceil(0.003 * (videoDock->isTouch ? 8 : 1) * width())));
+        const int trigger2 = qMax<int>(15, static_cast<int>(ceil(0.025 * (videoDock->isTouch ? 4 : 1) * width())));
         if (videoDock->touchEnded)
             videoDock->isTouch = videoDock->touchEnded = false;
 

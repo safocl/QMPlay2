@@ -176,7 +176,7 @@ public:
 
     static inline bool isGroup(QTreeWidgetItem *tWI)
     {
-        return tWI ? (bool)(tWI->flags() & Qt::ItemIsDropEnabled) : false;
+        return tWI ? static_cast<bool>(tWI->flags() & Qt::ItemIsDropEnabled) : false;
     }
     static inline int getFlags(QTreeWidgetItem *tWI)
     {

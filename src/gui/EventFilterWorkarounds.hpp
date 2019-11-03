@@ -26,7 +26,7 @@ class EventFilterWorkarounds final : public QObject
 
 public:
     EventFilterWorkarounds(QObject *parent = nullptr);
-    ~EventFilterWorkarounds();
+    ~EventFilterWorkarounds() override;
 
 private:
     bool eventFilter(QObject *watched, QEvent *event) override;

@@ -29,12 +29,12 @@ ShortcutHandler::~ShortcutHandler()
 
 int ShortcutHandler::columnCount(const QModelIndex &parent) const
 {
-    Q_UNUSED(parent);
+    Q_UNUSED(parent)
     return 2;
 }
 int ShortcutHandler::rowCount(const QModelIndex &parent) const
 {
-    Q_UNUSED(parent);
+    Q_UNUSED(parent)
     return m_actions.count();
 }
 

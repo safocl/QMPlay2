@@ -161,7 +161,7 @@ void EntryProperties::directAddressChanged()
         QFileInfo fi(addrB->cleanUrl());
         if (fi.isFile())
         {
-            fileSizeL->setText(tr("File size") + ": " + Functions::sizeString(fi.size()));
+            fileSizeL->setText(tr("File size") + ": " + Functions::sizeString(static_cast<quint64>(fi.size())));
             nameE->setReadOnly(true);
         }
         else

@@ -427,7 +427,7 @@ SettingsWidget::SettingsWidget(int page, const QString &moduleName, QWidget *vid
         page2->longSeekB->setValue(QMPSettings.getInt("LongSeek"));
         page2->bufferLocalB->setValue(QMPSettings.getInt("AVBufferLocal"));
         page2->bufferNetworkB->setValue(QMPSettings.getInt("AVBufferNetwork"));
-        page2->backwardBufferNetworkB->setCurrentIndex(QMPSettings.getUInt("BackwardBuffer"));
+        page2->backwardBufferNetworkB->setCurrentIndex(static_cast<int>(QMPSettings.getUInt("BackwardBuffer")));
         page2->playIfBufferedB->setValue(QMPSettings.getDouble("PlayIfBuffered"));
         page2->maxVolB->setValue(QMPSettings.getInt("MaxVol"));
 
@@ -487,10 +487,10 @@ SettingsWidget::SettingsWidget(int page, const QString &moduleName, QWidget *vid
         page2->silence->setChecked(QMPSettings.getBool("Silence"));
         page2->restoreVideoEq->setChecked(QMPSettings.getBool("RestoreVideoEqualizer"));
         page2->ignorePlaybackError->setChecked(QMPSettings.getBool("IgnorePlaybackError"));
-        page2->leftMouseTogglePlay->setCheckState((Qt::CheckState)qBound(0, QMPSettings.getInt("LeftMouseTogglePlay"), 2));
+        page2->leftMouseTogglePlay->setCheckState(static_cast<Qt::CheckState>(qBound(0, QMPSettings.getInt("LeftMouseTogglePlay"), 2)));
         page2->middleMouseToggleFullscreen->setChecked(QMPSettings.getBool("MiddleMouseToggleFullscreen"));
 
-        page2->accurateSeekB->setCheckState((Qt::CheckState)QMPSettings.getInt("AccurateSeek"));
+        page2->accurateSeekB->setCheckState(static_cast<Qt::CheckState>(QMPSettings.getInt("AccurateSeek")));
         page2->accurateSeekB->setToolTip(tr("Slower, but more accurate seeking.\nPartially checked doesn't affect seeking on slider."));
 
         page2->unpauseWhenSeekingB->setChecked(QMPSettings.getBool("UnpauseWhenSeeking"));
@@ -529,7 +529,7 @@ SettingsWidget::SettingsWidget(int page, const QString &moduleName, QWidget *vid
         for (Module *module : QMPlay2Core.getPluginsInstance())
         {
             QListWidgetItem *tWI = new QListWidgetItem(module->name());
-            tWI->setData(Qt::UserRole, qVariantFromValue((void *)module));
+            tWI->setData(Qt::UserRole, qVariantFromValue(module));
             QString toolTip = "<html>" + tr("Contains") + ":";
             for (const Module::Info &mod : module->getModulesInfo(true))
             {
@@ -684,7 +684,7 @@ void SettingsWidget::applyProxy()
     else
     {
         const QString proxyHostName = QMPSettings.getString("Proxy/Host");
-        const quint16 proxyPort = QMPSettings.getInt("Proxy/Port");
+        const quint16 proxyPort = static_cast<const quint16>(QMPSettings.getInt("Proxy/Port"));
         QString proxyUser, proxyPassword;
         if (QMPSettings.getBool("Proxy/Login"))
         {
@@ -889,7 +889,7 @@ void SettingsWidget::apply()
         case 3:
             if (page3->module && page3->scrollA->widget())
             {
-                Module::SettingsWidget *settingsWidget = (Module::SettingsWidget *)page3->scrollA->widget();
+                Module::SettingsWidget *settingsWidget = static_cast<Module::SettingsWidget *>(page3->scrollA->widget());
                 settingsWidget->saveSettings();
                 settingsWidget->flushSettings();
                 page3->module->setInstances(page3Restart);
@@ -922,7 +922,7 @@ void SettingsWidget::chModule(QListWidgetItem *w)
 {
     if (w)
     {
-        page3->module = (Module *)w->data(Qt::UserRole).value<void *>();
+        page3->module = static_cast<Module *>(w->data(Qt::UserRole).value<void *>());
         QWidget *w = page3->module->getSettingsWidget();
         if (w)
         {

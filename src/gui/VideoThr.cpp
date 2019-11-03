@@ -40,8 +40,8 @@ using Functions::gettime;
 
 #include <cmath>
 
-VideoThr::VideoThr(PlayClass &playC, VideoWriter *hwAccelWriter, const QStringList &pluginsName) :
-    AVThread(playC, "video:", hwAccelWriter, pluginsName),
+VideoThr::VideoThr(PlayClass &__playC, VideoWriter *hwAccelWriter, const QStringList &pluginsName) :
+    AVThread(__playC, "video:", hwAccelWriter, pluginsName),
     doScreenshot(false),
     deleteOSD(false), deleteFrame(false), gotFrameOrError(false), decoderError(false),
     W(0), H(0), seq(0),
@@ -145,7 +145,7 @@ void VideoThr::initFilters(bool processParams)
         const bool doubleFramerate = QMPSettings.getBool("Deinterlace/Doubler");
         const bool autoParity = QMPSettings.getBool("Deinterlace/AutoParity");
         const bool topFieldFirst = QMPSettings.getBool("Deinterlace/TFF");
-        const quint8 deintFlags = autoDeint | doubleFramerate << 1 | autoParity << 2 | topFieldFirst << 3;
+        const quint8 deintFlags = autoDeint | static_cast<quint8>(doubleFramerate << 1) | static_cast<quint8>(autoParity << 2) | static_cast<quint8>(topFieldFirst << 3);
         bool HWDeint = false, PrepareForHWBobDeint = false;
         if ((HWDeint = writer->modParam("Deinterlace", 1 | deintFlags << 1)))
             PrepareForHWBobDeint = doubleFramerate && writer->getParam("PrepareForHWBobDeint").toBool();
@@ -226,7 +226,7 @@ void VideoThr::updateSubs()
 
 inline VideoWriter *VideoThr::videoWriter() const
 {
-    return (VideoWriter *)writer;
+    return static_cast<VideoWriter *>(writer);
 }
 
 void VideoThr::run()
@@ -240,7 +240,9 @@ void VideoThr::run()
     canWrite = true;
 
     const auto resetVariables = [&] {
-        tmp_br = tmp_time = frames = 0;
+        tmp_br = 0;
+		tmp_time = 0;
+		frames = 0;
         skip = false;
         fast = 0;
 

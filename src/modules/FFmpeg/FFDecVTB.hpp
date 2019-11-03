@@ -26,7 +26,7 @@ class FFDecVTB final : public FFDecHWAccel
 {
 public:
     FFDecVTB(Module &module);
-    ~FFDecVTB();
+    ~FFDecVTB() override;
 
     bool set() override;
 
@@ -42,5 +42,5 @@ public:
 private:
     SwsContext *m_swsCtx;
     bool m_copyVideo;
-    bool m_hasCriticalError;
+//    bool m_hasCriticalError;
 };

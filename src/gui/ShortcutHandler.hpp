@@ -29,7 +29,7 @@ class ShortcutHandler final : public QAbstractTableModel
 
 public:
     ShortcutHandler(QObject *parent);
-    ~ShortcutHandler();
+    ~ShortcutHandler() override;
 
     int columnCount(const QModelIndex &parent) const override;
     int rowCount(const QModelIndex &parent) const override;

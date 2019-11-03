@@ -116,7 +116,7 @@ void UpdateEntryThr::run()
         ItemUpdated iu;
         iu.item = itu.item;
 
-        if (itu.name.isNull() && itu.length == -2.0)
+        if (itu.name.isNull() && /*itu.length == -2.0*/ (std::max(itu.length, -2.0) - std::min(itu.length, -2.0)) < 0.000000000001 )
         {
             Functions::getDataIfHasPluginPrefix(url, &url, &itu.name, &iu.icon, &ioCtrl);
             iu.updateIcon = true;

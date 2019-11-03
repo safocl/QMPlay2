@@ -607,7 +607,7 @@ void MenuBar::setKeyShortcuts()
 
 void MenuBar::changeProfile()
 {
-    QAction *act = (QAction *)sender();
+    QAction *act = static_cast<QAction *>(sender());
     const QString selectedProfile = act->property("path").toString();
     QSettings profileSettings(QMPlay2Core.getSettingsDir() + "Profile.ini", QSettings::IniFormat);
     if (selectedProfile != getCurrentProfile(profileSettings))
@@ -631,13 +631,14 @@ void MenuBar::removeProfileMenuRequest(const QPoint &p)
     QAction *act = menu->actionAt(p);
     if (act && menu->actions().indexOf(act) >= 4)
     {
-        options->removeProfileMenu->setProperty("profile", QVariant::fromValue((void *)act));
+        options->removeProfileMenu->setProperty("profile", QVariant::fromValue(act)); // Why was casting necessary to (void *)?
         options->removeProfileMenu->popup(menu->mapToGlobal(p));
     }
 }
 void MenuBar::removeProfile()
 {
-    if (QAction *act = (QAction *)options->removeProfileMenu->property("profile").value<void *>())
+	QAction *act = options->removeProfileMenu->property("profile").value<QAction *>();
+    if ( act != nullptr)
     {
         const QString &profile = "Profiles/" + act->property("path").toString() + "/";
         if (profile == QMPlay2Core.getSettingsProfile())

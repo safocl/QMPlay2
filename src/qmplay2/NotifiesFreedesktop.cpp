@@ -44,7 +44,7 @@ QDBusArgument &operator<<(QDBusArgument &arg, const QImage &image)
     arg << scaledImage.hasAlphaChannel(); // Should be always "true" for ARGB32
     arg << scaledImage.depth() / channels;
     arg << channels;
-    arg << QByteArray::fromRawData((const char *)scaledImage.constBits(), scaledImage.byteCount());
+    arg << QByteArray::fromRawData(static_cast<const char *>(scaledImage.constBits()), scaledImage.sizeInBytes());
     arg.endStructure();
 
     return arg;
@@ -52,7 +52,7 @@ QDBusArgument &operator<<(QDBusArgument &arg, const QImage &image)
 const QDBusArgument &operator >>(const QDBusArgument &arg, QImage &image)
 {
     Q_UNUSED(image)
-    Q_ASSERT(!"This is needed to link but shouldn't be called");
+    Q_ASSERT(!static_cast<bool>("This is needed to link but shouldn't be called"));
     return arg;
 }
 

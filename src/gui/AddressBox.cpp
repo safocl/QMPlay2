@@ -120,6 +120,8 @@ QString AddressBox::url() const
             return url;
         case AddressBox::MODULE:
             return pB.currentText() + "://{" + url + "}" + pE.text();
+	default:
+		break;
     }
     return QString();
 }

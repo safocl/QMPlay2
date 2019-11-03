@@ -26,7 +26,7 @@ endif()
 
 set(CMAKE_LINK_DEPENDS_NO_SHARED ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
@@ -209,9 +209,14 @@ if(USE_GIT_VERSION)
         OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif()
 add_feature_info("Git version" QMPLAY2_GIT_HEAD "Append Git HEAD to QMPlay2 version")
-
+#include_directories(/usr/i686-w64-mingw32/include)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang") # GCC or Clang
-    option(USE_LINK_TIME_OPTIMIZATION "Enable link time optimization for release builds" OFF)
+    
+	add_definitions(-Wall)
+	add_definitions(-Wextra)
+	add_definitions(-Werror)
+	add_definitions(-Wno-weak-vtables)
+	option(USE_LINK_TIME_OPTIMIZATION "Enable link time optimization for release builds" OFF)
     add_feature_info("Link Time Optimization" USE_LINK_TIME_OPTIMIZATION "Enable link time optimization for release builds")
 
     option(USE_ASAN "Use Address Sanitizer" OFF)

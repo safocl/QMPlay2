@@ -33,7 +33,7 @@ class Drawable final : public QWidget
     Q_OBJECT
 public:
     Drawable(DirectDrawWriter &);
-    ~Drawable();
+    ~Drawable() override;
 
     inline bool canDraw() const
     {
@@ -96,7 +96,7 @@ class DirectDrawWriter final : public VideoWriter
 public:
     DirectDrawWriter(Module &);
 private:
-        ~DirectDrawWriter();
+        ~DirectDrawWriter() override;
 
     bool set() override;
 

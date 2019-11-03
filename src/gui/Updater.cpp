@@ -113,7 +113,7 @@ void Updater::downloadUpdate()
 
 void Updater::infoFinished()
 {
-    NetworkReply *reply = (NetworkReply *)sender();
+    NetworkReply *reply = static_cast<NetworkReply *>(sender());
     if (!reply->hasError())
     {
         infoFile.write(reply->readAll());

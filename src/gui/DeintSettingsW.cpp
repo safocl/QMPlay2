@@ -100,12 +100,12 @@ void DeintSettingsW::writeSettings()
     QMPSettings.set("Deinterlace/Doubler", doublerB->isChecked());
     QMPSettings.set("Deinterlace/AutoParity", autoParityB->isChecked());
     QMPSettings.set("Deinterlace/SoftwareMethod", softwareMethodsCB->currentText());
-    QMPSettings.set("Deinterlace/TFF", (bool)parityCB->currentIndex());
+    QMPSettings.set("Deinterlace/TFF", static_cast<bool>(parityCB->currentIndex()));
 
     QSet<Module *> videoDeintModules;
     for (QObject *obj : children())
         if (obj->isWidgetType() && !obj->property("module").isNull())
-            videoDeintModules.insert((Module *)obj->property("module").value<void *>());
+            videoDeintModules.insert(static_cast<Module *>(obj->property("module").value<void *>()));
     for (Module *module : asConst(videoDeintModules))
         module->videoDeintSave();
 }
@@ -115,7 +115,7 @@ void DeintSettingsW::softwareMethods(bool doubler)
     softwareMethodsCB->clear();
     for (Module *module : QMPlay2Core.getPluginsInstance())
         for (const Module::Info &mod : module->getModulesInfo())
-            if ((mod.type & 0xF) == Module::VIDEOFILTER && (mod.type & Module::DEINTERLACE) && (doubler == (bool)(mod.type & Module::DOUBLER)))
+            if ((mod.type & 0xF) == Module::VIDEOFILTER && (mod.type & Module::DEINTERLACE) && (doubler == static_cast<bool>(mod.type & Module::DOUBLER)))
                 softwareMethodsCB->addItem(mod.name, mod.description);
     const int idx = softwareMethodsCB->findText(QMPlay2Core.getSettings().getString("Deinterlace/SoftwareMethod"));
     softwareMethodsCB->setCurrentIndex(idx < 0 ? 0 : idx);

@@ -671,7 +671,7 @@ void PlaylistDock::repeat()
     if (QAction *act = qobject_cast<QAction *>(sender()))
     {
         const RepeatMode lastRepeatMode = repeatMode;
-        repeatMode = (RepeatMode)act->property("enumValue").toInt();
+        repeatMode = static_cast<RepeatMode>(act->property("enumValue").toInt());
         if (lastRepeatMode != repeatMode)
         {
             emit repeatEntry(repeatMode == RepeatEntry);

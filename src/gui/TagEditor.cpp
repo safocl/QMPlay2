@@ -99,14 +99,14 @@ static inline bool isOgg(File &file)
 static inline Ogg::XiphComment *getXiphComment(File &file)
 {
     if (instanceOf(file, Ogg::Vorbis::File))
-        return ((Ogg::Vorbis::File &)file).tag();
+        return (static_cast<Ogg::Vorbis::File &>(file)).tag();
     else if (instanceOf(file, Ogg::FLAC::File))
-        return ((Ogg::FLAC::File &)file).tag();
+        return (static_cast<Ogg::FLAC::File &>(file)).tag();
     else if (instanceOf(file, Ogg::Speex::File))
-        return ((Ogg::Speex::File &)file).tag();
+        return (static_cast<Ogg::Speex::File &>(file)).tag();
 #if TAGLIB19
     else if (instanceOf(file, Ogg::Opus::File))
-        return ((Ogg::Opus::File &)file).tag();
+        return (static_cast<Ogg::Opus::File &>(file)).tag();
 #endif
     return nullptr;
 }
@@ -132,7 +132,7 @@ void PictureW::paintEvent(QPaintEvent *)
     if (!picture.isEmpty())
     {
         QPixmap pixmap;
-        pixmap.loadFromData((const quint8 *)picture.data(), picture.size());
+        pixmap.loadFromData(reinterpret_cast<const uchar *>(picture.data()), picture.size());
         if (!pixmap.isNull())
         {
             QPainter p(this);
@@ -146,7 +146,7 @@ void PictureW::paintEvent(QPaintEvent *)
 static inline Tag &getTag(FileRef &fRef, File &file)
 {
 #if TAGLIB19
-    return *(instanceOf(file, RIFF::WAV::File) ? ((RIFF::WAV::File &)file).InfoTag() : fRef.tag());
+    return *(instanceOf(file, RIFF::WAV::File) ? (static_cast<RIFF::WAV::File &>(file).InfoTag()) : fRef.tag());
 #else
     Q_UNUSED(file)
     return *fRef.tag();
@@ -265,7 +265,7 @@ bool TagEditor::open(const QString &fileName)
         if (instanceOf(file, RIFF::WAV::File))
         {
             const Tag &tag = *fRef->tag();
-            RIFF::Info::Tag &infoTag = *((RIFF::WAV::File &)file).InfoTag();
+            RIFF::Info::Tag &infoTag = *(static_cast<RIFF::WAV::File &>(file).InfoTag());
             if (infoTag.isEmpty() && !tag.isEmpty())
             {
                 infoTag.setTitle(tag.title());
@@ -289,8 +289,8 @@ bool TagEditor::open(const QString &fileName)
             albumE->setText(tag.album().toCString(true));
             commentE->setText(tag.comment().toCString(true));
             genreE->setText(tag.genre().toCString(true));
-            yearB->setValue(tag.year());
-            trackB->setValue(tag.track());
+            yearB->setValue(static_cast<int>(tag.year()));
+            trackB->setValue(static_cast<int>(tag.track()));
         }
         /* Covers */
         if (instanceOf(file, MPEG::File) || instanceOf(file, RIFF::AIFF::File))
@@ -301,20 +301,20 @@ bool TagEditor::open(const QString &fileName)
                 ID3v2::Tag *id3v2 = nullptr;
                 if (instanceOf(file, MPEG::File))
                 {
-                    MPEG::File &mpegF = (MPEG::File &)file;
+                    MPEG::File &mpegF = static_cast<MPEG::File &>(file);
 #if TAGLIB19
                     if (mpegF.hasID3v2Tag())
 #endif
                         id3v2 = mpegF.ID3v2Tag();
                 }
                 else if (instanceOf(file, RIFF::AIFF::File))
-                    id3v2 = ((RIFF::AIFF::File &)file).tag();
+                    id3v2 = (static_cast<RIFF::AIFF::File &>(file).tag());
                 if (id3v2)
                 {
                     const ID3v2::FrameList &frameList = id3v2->frameList("APIC");
                     if (!frameList.isEmpty())
                     {
-                        ID3v2::AttachedPictureFrame &pictureFrame = *(ID3v2::AttachedPictureFrame *)frameList.front();
+                        ID3v2::AttachedPictureFrame &pictureFrame = *(static_cast<ID3v2::AttachedPictureFrame *>(frameList.front()));
                         pictureMimeType = pictureFrame.mimeType().toCString();
                         *picture = pictureFrame.picture();
                         pictureB->setChecked(true);
@@ -326,7 +326,7 @@ bool TagEditor::open(const QString &fileName)
         else if (instanceOf(file, FLAC::File))
         {
             pictureB->setEnabled(true);
-            FLAC::File &flacF = (FLAC::File &)file;
+            FLAC::File &flacF = static_cast<FLAC::File &>(file);
             if (!flacF.pictureList().isEmpty())
             {
                 FLAC::Picture &flacPicture = *flacF.pictureList().front();
@@ -339,7 +339,7 @@ bool TagEditor::open(const QString &fileName)
         }
         else if (instanceOf(file, MP4::File))
         {
-            MP4::ItemListMap &itemListMap = ((MP4::File &)file).tag()->itemListMap();
+            MP4::ItemListMap &itemListMap = (static_cast<MP4::File &>(file)).tag()->itemListMap();
             MP4::ItemListMap::ConstIterator it = itemListMap.find("covr");
             pictureB->setEnabled(true);
             if (it != itemListMap.end())
@@ -467,14 +467,14 @@ bool TagEditor::save()
             tag.setGenre(String(genreE->text().toUtf8().constData(), String::UTF8));
             mustSave = true;
         }
-        if ((uint)yearB->value() != tag.year())
+        if (static_cast<uint>(yearB->value()) != tag.year())
         {
-            tag.setYear(yearB->value());
+            tag.setYear(static_cast<uint>(yearB->value()));
             mustSave = true;
         }
-        if ((uint)trackB->value() != tag.track())
+        if (static_cast<uint>(trackB->value()) != tag.track())
         {
-            tag.setTrack(trackB->value());
+            tag.setTrack(static_cast<uint>(trackB->value()));
             mustSave = true;
         }
 
@@ -485,9 +485,9 @@ bool TagEditor::save()
             {
                 ID3v2::Tag *id3v2 = nullptr;
                 if (instanceOf(file, MPEG::File))
-                    id3v2 = ((MPEG::File &)file).ID3v2Tag(hasPicture);
+                    id3v2 = (static_cast<MPEG::File &>(file)).ID3v2Tag(hasPicture);
                 else if (instanceOf(file, RIFF::AIFF::File))
-                    id3v2 = ((RIFF::AIFF::File &)file).tag();
+                    id3v2 = (static_cast<RIFF::AIFF::File &>(file)).tag();
                 if (id3v2)
                 {
                     id3v2->removeFrames("APIC");
@@ -504,7 +504,7 @@ bool TagEditor::save()
             }
             else if (instanceOf(file, FLAC::File))
             {
-                FLAC::File &flacF = (FLAC::File &)file;
+                FLAC::File &flacF = static_cast<FLAC::File &>(file);
                 flacF.removePictures();
                 if (hasPicture)
                 {
@@ -518,12 +518,12 @@ bool TagEditor::save()
             }
             else if (instanceOf(file, MP4::File))
             {
-                MP4::ItemListMap &itemListMap = ((MP4::File &)file).tag()->itemListMap();
+                MP4::ItemListMap &itemListMap = (static_cast<MP4::File &>(file)).tag()->itemListMap();
                 if (itemListMap.contains("covr"))
                     itemListMap.erase("covr");
                 if (hasPicture)
                 {
-                    MP4::CoverArt::Format format = (MP4::CoverArt::Format)0;
+                    MP4::CoverArt::Format format = static_cast<MP4::CoverArt::Format>(0);
                     if (pictureMimeType == "image/jpeg")
                         format = MP4::CoverArt::JPEG;
                     else if (pictureMimeType == "image/png")
@@ -578,24 +578,24 @@ bool TagEditor::save()
             mustSave = true;
 
             if (instanceOf(file, MPEG::File))
-                ((MPEG::File &)file).strip();
+                (static_cast<MPEG::File &>(file)).strip();
             else if (instanceOf(file, MPC::File))
-                ((MPC::File &)file).strip();
+                (static_cast<MPC::File &>(file)).strip();
             else if (instanceOf(file, WavPack::File))
-                ((WavPack::File &)file).strip();
+                (static_cast<WavPack::File &>(file)).strip();
             else if (instanceOf(file, TrueAudio::File))
-                ((TrueAudio::File &)file).strip();
+                (static_cast<TrueAudio::File &>(file)).strip();
             else if (instanceOf(file, APE::File))
-                ((APE::File &)file).strip();
+                (static_cast<APE::File &>(file)).strip();
             else if (instanceOf(file, MP4::File))
-                ((MP4::File &)file).tag()->itemListMap().clear();
+                (static_cast<MP4::File &>(file)).tag()->itemListMap().clear();
             else if (instanceOf(file, ASF::File))
-                ((ASF::File &)file).tag()->attributeListMap().clear();
+                (static_cast<ASF::File &>(file)).tag()->attributeListMap().clear();
             else if (isOgg(file))
                 removeXiphComment(getXiphComment(file));
             else if (instanceOf(file, FLAC::File))
             {
-                FLAC::File &flacF = (FLAC::File &)file;
+                FLAC::File &flacF = static_cast<FLAC::File &>(file);
                 flacF.removePictures();
 #if TAGLIB19
                 if (flacF.hasXiphComment())
@@ -604,7 +604,7 @@ bool TagEditor::save()
             }
             else if (instanceOf(file, RIFF::AIFF::File))
             {
-                ID3v2::Tag *id3v2 = ((RIFF::AIFF::File &)file).tag();
+                ID3v2::Tag *id3v2 = (static_cast<RIFF::AIFF::File &>(file)).tag();
                 if (id3v2)
                 {
                     ID3v2::FrameList frameList = id3v2->frameList();
@@ -617,13 +617,13 @@ bool TagEditor::save()
             {
                 Mod::Tag *modTag = nullptr;
                 if (instanceOf(file, Mod::File))
-                    modTag = ((Mod::File &)file).tag();
+                    modTag = (static_cast<Mod::File &>(file)).tag();
                 else if (instanceOf(file, S3M::File))
-                    modTag = ((S3M::File &)file).tag();
+                    modTag = (static_cast<S3M::File &>(file)).tag();
                 else if (instanceOf(file, IT::File))
-                    modTag = ((IT::File &)file).tag();
+                    modTag = (static_cast<IT::File &>(file)).tag();
                 else if (instanceOf(file, XM::File))
-                    modTag = ((XM::File &)file).tag();
+                    modTag = (static_cast<XM::File &>(file)).tag();
                 if (modTag)
                     modTag->setTrackerName(String::null);
             }
@@ -633,7 +633,7 @@ bool TagEditor::save()
         /* Remove ID3 tags from FLAC::File */
         if (mustSave && instanceOf(file, FLAC::File))
         {
-            FLAC::File &flacF = (FLAC::File &)file;
+            FLAC::File &flacF = static_cast<FLAC::File &>(file);
 #if TAGLIB19
             if (flacF.hasID3v1Tag() || flacF.hasID3v2Tag())
 #else
@@ -662,7 +662,7 @@ bool TagEditor::save()
         /* No ID3v2 in WAV, only InfoTag */
         if (mustSave && instanceOf(file, RIFF::WAV::File))
         {
-            RIFF::WAV::File &wavF = (RIFF::WAV::File &)file;
+            RIFF::WAV::File &wavF = static_cast<RIFF::WAV::File &>(file);
             wavF.save(wavF.InfoTag()->isEmpty() ? RIFF::WAV::File::NoTags : RIFF::WAV::File::Info);
             mustSave = false;
         }
@@ -684,7 +684,7 @@ void TagEditor::loadImage()
             const QByteArray fmt = QImageReader::imageFormat(&f);
             if (fmt == "jpeg" || fmt == "png" || fmt == "gif" || fmt == "bmp")
             {
-                picture->setData(f.readAll().constData(), f.size());
+                picture->setData(f.readAll().constData(), static_cast<unsigned>(f.size()));
                 pictureMimeType = "image/" + fmt;
                 pictureModificated = true;
                 pictureW->update();
@@ -694,7 +694,7 @@ void TagEditor::loadImage()
 }
 void TagEditor::saveImage()
 {
-    QMPlay2GUI.saveCover(QByteArray::fromRawData(picture->data(), picture->size()));
+    QMPlay2GUI.saveCover(QByteArray::fromRawData(picture->data(), static_cast<int>(picture->size())));
 }
 
 void TagEditor::clearValues()

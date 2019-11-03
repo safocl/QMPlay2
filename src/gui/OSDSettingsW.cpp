@@ -22,6 +22,9 @@
 #include <LibASS.hpp>
 
 #include <QRadioButton>
+#include <QLabel>
+#include <QGuiApplication>
+#include <QGridLayout>
 
 #include "ui_OSDSettings.h"
 

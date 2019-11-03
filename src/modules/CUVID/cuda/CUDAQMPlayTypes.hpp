@@ -1,5 +1,5 @@
 /* Types compatible with cuda.h */
-
+#include <QtGlobal>
 #ifdef Q_OS_WIN
     #define CUDAAPI __stdcall
 #else

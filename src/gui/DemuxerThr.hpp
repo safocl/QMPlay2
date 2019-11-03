@@ -39,7 +39,7 @@ class DemuxerThr final : public QThread
     Q_OBJECT
 private:
     DemuxerThr(PlayClass &);
-    ~DemuxerThr();
+    ~DemuxerThr() override;
 
     QByteArray getCoverFromStream() const;
 

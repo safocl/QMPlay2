@@ -39,7 +39,7 @@ void TextEdit::mousePressEvent(QMouseEvent *e)
         QString anchor = anchorAt(e->pos());
         if (!anchor.isEmpty())
         {
-            InfoDock *infoD = (InfoDock *)parent()->parent();
+            InfoDock *infoD = static_cast<InfoDock *>(parent()->parent());
             if (anchor.startsWith("seek:"))
             {
                 anchor.remove(0, 5);
@@ -68,7 +68,7 @@ InfoDock::InfoDock()
     setWindowTitle(tr("Information"));
     setVisible(false);
 
-    setWidget(&mainW);
+    setWidget(mainW);
 
     infoE = new TextEdit;
     infoE->setMouseTracking(true);
@@ -81,7 +81,7 @@ InfoDock::InfoDock()
     buffer = new QLabel;
     bitrateAndFPS = new QLabel;
 
-    layout = new QGridLayout(&mainW);
+    layout = new QGridLayout(mainW);
     layout->addWidget(infoE);
     layout->addWidget(buffer);
     layout->addWidget(bitrateAndFPS);
@@ -202,7 +202,7 @@ void InfoDock::setLabelValues()
 }
 void InfoDock::setBufferLabel()
 {
-    QString txt = tr("Buffer") + ": [" + Functions::sizeString(bytes1) + ", " + Functions::sizeString(bytes2) + "]";
+    QString txt = tr("Buffer") + ": [" + Functions::sizeString(static_cast<quint64>(bytes1)) + ", " + Functions::sizeString(static_cast<quint64>(bytes2)) + "]";
     if (seconds1 >= 0.0 && seconds2 >= 0.0)
         txt += ", [" + QString::number(seconds1, 'f', 1) + " s" + ", " + QString::number(seconds2, 'f', 1) + " s" + "]";
     buffer->setText(txt);

@@ -40,17 +40,17 @@ public:
         QLibrary libX11("X11");
         if (libX11.load())
         {
-            XOpenDisplayFunc = (XOpenDisplayType)libX11.resolve("XOpenDisplay");
-            XForceScreenSaverFunc = (XForceScreenSaverType)libX11.resolve("XForceScreenSaver");
-            XFlushFunc = (XFlushType)libX11.resolve("XFlush");
-            XCloseDisplayFunc = (XCloseDisplayType)libX11.resolve("XCloseDisplay");
+            XOpenDisplayFunc = reinterpret_cast<XOpenDisplayType>(libX11.resolve("XOpenDisplay"));
+            XForceScreenSaverFunc = reinterpret_cast<XForceScreenSaverType>(libX11.resolve("XForceScreenSaver"));
+            XFlushFunc = reinterpret_cast<XFlushType>(libX11.resolve("XFlush"));
+            XCloseDisplayFunc = reinterpret_cast<XCloseDisplayType>(libX11.resolve("XCloseDisplay"));
             if (XOpenDisplayFunc && XForceScreenSaverFunc && XFlushFunc && XCloseDisplayFunc)
                 m_disp = XOpenDisplayFunc(nullptr);
         }
     }
     inline bool isLoaded() const
     {
-        return (bool)m_disp;
+        return static_cast<bool>(m_disp); // or 'return m_disp == nullptr' ???
     }
 
     inline void inhibit()

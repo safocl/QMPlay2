@@ -24,7 +24,7 @@ class PortAudio final : public Module
 {
 public:
     PortAudio();
-        ~PortAudio();
+        ~PortAudio() override;
 private:
     QList<Info> getModulesInfo(const bool) const override;
     void *createInstance(const QString &) override;

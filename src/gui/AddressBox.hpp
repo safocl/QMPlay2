@@ -25,7 +25,7 @@ class AddressBox : public QWidget
 {
     Q_OBJECT
 public:
-    enum PrefixType {AUTODETECT = 'D', DIRECT = 'A', MODULE = 'M'};
+    enum PrefixType {NODEF = -1, AUTODETECT = 'D', DIRECT = 'A', MODULE = 'M'}; // maybe 'D' and 'A' swap?
 
     AddressBox(Qt::Orientation, QString url = QString());
 
@@ -41,7 +41,11 @@ public:
 
     inline PrefixType currentPrefixType() const
     {
-        return (PrefixType)pB.itemData(pB.currentIndex()).toInt();
+		if (static_cast<PrefixType>(pB.itemData(pB.currentIndex()).toInt()) == AUTODETECT ||
+			static_cast<PrefixType>(pB.itemData(pB.currentIndex()).toInt()) == DIRECT ||
+			static_cast<PrefixType>(pB.itemData(pB.currentIndex()).toInt()) == MODULE)
+			return static_cast<PrefixType>(pB.itemData(pB.currentIndex()).toInt()); // and if a value other than an enumeration gets, then how will the type be cast into it? 
+		return NODEF;
     }
     QString url() const;
     QString cleanUrl() const;

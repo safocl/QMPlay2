@@ -1,4 +1,5 @@
 /* Types from: cuviddec.h and nvcuvid.h */
+#include <QtGlobal>
 
 enum cudaVideoCodec
 {

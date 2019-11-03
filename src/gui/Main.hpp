@@ -84,7 +84,7 @@ public:
     QString newProfileName, cmdLineProfile;
 private:
     QMPlay2GUIClass();
-    ~QMPlay2GUIClass();
+    ~QMPlay2GUIClass() override;
 };
 
 #define QMPlay2GUI \

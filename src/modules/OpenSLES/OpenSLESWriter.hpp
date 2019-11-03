@@ -29,7 +29,7 @@ class OpenSLESWriter final : public Writer
 public:
     OpenSLESWriter(Module &);
 private:
-        ~OpenSLESWriter();
+        ~OpenSLESWriter() override;
 
     bool set() override;
 
