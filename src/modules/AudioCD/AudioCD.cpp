@@ -121,7 +121,7 @@ void AudioCD::add()
 }
 void AudioCD::browseCDImage()
 {
-    QWidget *parent = (QWidget *)sender()->parent();
+    QWidget *parent = static_cast<QWidget *>(sender()->parent());
     QString path = QFileDialog::getOpenFileName(parent, tr("Choose AudioCD image"), QString(), tr("Supported AudioCD images") + " (*.cue *.nrg *.toc)");
     if (!path.isEmpty())
     {

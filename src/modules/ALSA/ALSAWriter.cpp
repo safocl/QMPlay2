@@ -25,19 +25,19 @@
     #define HAVE_CHMAP
 #endif
 
-template<typename T>
-static void convert_samples(const float *src, const int samples, T *int_samples, unsigned channels)
+template<typename T, typename F>
+static void convert_samples(const F *src, const int samples, T *int_samples, unsigned channels)
 {
-    const unsigned min = 1 << ((sizeof(T) << 3) - 1);
-    const unsigned max = min - 1;
+    const uint64_t min = static_cast<uint64_t>( static_cast<uint64_t>(1) << ((sizeof(T) << 3) - 1));
+    const uint64_t max = static_cast<uint64_t>( min - 1);
     for (int i = 0; i < samples; ++i)
     {
-        if (src[i] >= 1.0f)
-            int_samples[i] = max;
-        else if (src[i] <= -1.0f)
-            int_samples[i] = min;
+        if (src[i] >= 1)
+            int_samples[i] = static_cast<T>(max);
+        else if (src[i] <= -1)
+            int_samples[i] = static_cast<T>(min);
         else
-            int_samples[i] = src[i] * max;
+            int_samples[i] = static_cast<T>(src[i]) * static_cast<T>(max);
     }
     if (channels == 6 || channels == 8)
     {
@@ -90,7 +90,7 @@ bool ALSAWriter::set()
     const double _delay = sets().getDouble("Delay");
     const QString _devName = ALSACommon::getDeviceName(ALSACommon::getDevices(), sets().getString("OutputDevice"));
     const bool _autoFindMultichannelDevice = sets().getBool("AutoFindMultichnDev");
-    const bool restartPlaying = _delay != delay || _devName != devName || _autoFindMultichannelDevice != autoFindMultichannelDevice;
+    const bool restartPlaying = /*_delay != delay*/ (std::max(_delay, delay) - std::min(_delay, delay)) > 0.0000000000001  || _devName != devName || _autoFindMultichannelDevice != autoFindMultichannelDevice;
     delay = _delay;
     devName = _devName;
     autoFindMultichannelDevice = _autoFindMultichannelDevice;
@@ -196,7 +196,7 @@ bool ALSAWriter::processParams(bool *paramsCorrected)
                     sample_size = 1;
                 }
 
-                unsigned delay_us = round(delay * 1000000.0);
+                unsigned delay_us = static_cast<unsigned>(round(delay * 1000000.0));
                 if (fmt != SND_PCM_FORMAT_UNKNOWN && set_snd_pcm_hw_params(snd, params, fmt, channels, sample_rate, delay_us))
                 {
                     bool err2 = false;
@@ -269,22 +269,22 @@ qint64 ALSAWriter::write(const QByteArray &arr)
     if (!readyWrite())
         return 0;
 
-    const int samples = arr.size() / sizeof(float);
-    const int to_write = samples / channels;
+    const int samples = arr.size() / static_cast<int>(sizeof(float));
+    const int to_write = samples / static_cast<int>(channels);
 
-    const int bytes = samples * sample_size;
+    const int bytes = samples * static_cast<int>(sample_size);
     if (int_samples.size() < bytes)
         int_samples.resize(bytes);
     switch (sample_size)
     {
         case 4:
-            convert_samples((const float *)arr.constData(), samples, (qint32 *)int_samples.constData(), mustSwapChn ? channels : 0);
+            convert_samples(arr.constData(), samples, int_samples.data(), mustSwapChn ? channels : 0);
             break;
         case 2:
-            convert_samples((const float *)arr.constData(), samples, (qint16 *)int_samples.constData(), mustSwapChn ? channels : 0);
+            convert_samples(arr.constData(), samples, int_samples.data(), mustSwapChn ? channels : 0);
             break;
         case 1:
-            convert_samples((const float *)arr.constData(), samples, (qint8 *)int_samples.constData(), mustSwapChn ? channels : 0);
+            convert_samples(arr.constData(), samples, int_samples.data(), mustSwapChn ? channels : 0);
             break;
     }
     switch (snd_pcm_state(snd))
@@ -292,11 +292,11 @@ qint64 ALSAWriter::write(const QByteArray &arr)
         case SND_PCM_STATE_XRUN:
             if (!snd_pcm_prepare(snd))
             {
-                const int silence = snd_pcm_avail(snd) - to_write;
+                const int silence = static_cast<int>(snd_pcm_avail(snd) - to_write);
                 if (silence > 0)
                 {
-                    QByteArray silenceArr(silence * channels * sample_size, 0);
-                    snd_pcm_writei(snd, silenceArr.constData(), silence);
+                    QByteArray silenceArr(silence * static_cast<int>(channels * sample_size), 0);
+                    snd_pcm_writei(snd, silenceArr.constData(), static_cast<unsigned>(silence));
                 }
             }
             break;
@@ -306,7 +306,7 @@ qint64 ALSAWriter::write(const QByteArray &arr)
         default:
             break;
     }
-    int ret = snd_pcm_writei(snd, int_samples.constData(), to_write);
+    int ret = static_cast<int>(snd_pcm_writei(snd, int_samples.constData(), static_cast<unsigned long>(to_write)));
     if (ret < 0 && ret != -EPIPE && snd_pcm_recover(snd, ret, false))
     {
         QMPlay2Core.logError("ALSA :: " + tr("Playback error"));

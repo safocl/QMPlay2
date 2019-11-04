@@ -167,7 +167,8 @@ int AudioCDDemux::bitrate() const
 
 bool AudioCDDemux::seek(double s, bool)
 {
-    return (sector = (s / duration)) < numSectors;
+	sector = static_cast<int32_t>(s / duration);
+    return sector < numSectors;
 }
 bool AudioCDDemux::read(Packet &decoded, int &idx)
 {
@@ -178,7 +179,7 @@ bool AudioCDDemux::read(Packet &decoded, int &idx)
     if (cdio_read_audio_sector(cdio, cd_samples, startSector + sector) == DRIVER_OP_SUCCESS)
     {
         decoded.resize(CD_BLOCKSIZE * sizeof(float));
-        float *decoded_data = (float *)decoded.data();
+        float *decoded_data = reinterpret_cast<float *>(decoded.data()); // is correct casting?
         for (int i = 0; i < CD_BLOCKSIZE; ++i)
             decoded_data[i] = cd_samples[i] / 32768.0f;
 
@@ -218,7 +219,7 @@ bool AudioCDDemux::open(const QString &_url)
             device.chop(1);
 #endif
         bool ok;
-        trackNo = param.toInt(&ok);
+        trackNo = static_cast<track_t>(param.toInt(&ok));
         if (!ok)
             return false;
     }
@@ -231,7 +232,7 @@ bool AudioCDDemux::open(const QString &_url)
             numTracks = cdio_get_num_tracks(cdio);
             if (cdio_get_discmode(cdio) != CDIO_DISC_MODE_ERROR && numTracks > 0 && numTracks != CDIO_INVALID_TRACK)
             {
-                chn = cdio_get_track_channels(cdio, trackNo);
+                chn = static_cast<unsigned char>(cdio_get_track_channels(cdio, trackNo));
                 if (!chn) //NRG format returns 0 - why ?
                     chn = 2;
                 if (numTracks >= trackNo && (chn == 2 || chn == 4))
@@ -242,7 +243,7 @@ bool AudioCDDemux::open(const QString &_url)
                         readCDText(trackNo);
                     }
                     isData = cdio_get_track_format(cdio, trackNo) != TRACK_FORMAT_AUDIO;
-                    duration = CD_BLOCKSIZE / chn / (double)srate;
+                    duration = static_cast<double>( CD_BLOCKSIZE / chn / srate);
                     startSector = cdio_get_track_lsn(cdio, trackNo);
                     numSectors = cdio_get_track_last_lsn(cdio, trackNo) - startSector;
 
@@ -358,11 +359,11 @@ bool AudioCDDemux::freedb_query(cddb_disc_t *&cddb_disc)
         cddb_cache_set_dir(cddb, cddbDir.toLocal8Bit());
 #endif
 
-    cddb_disc_set_length(cddb_disc, FRAMES_TO_SECONDS(cdio_get_track_lba(cdio, CDIO_CDROM_LEADOUT_TRACK)));
+    cddb_disc_set_length(cddb_disc, static_cast<unsigned>( FRAMES_TO_SECONDS(cdio_get_track_lba(cdio, CDIO_CDROM_LEADOUT_TRACK))));
     for (int trackno = 1; trackno <= numTracks; ++trackno)
     {
         cddb_track_t *pcddb_track = cddb_track_new();
-        cddb_track_set_frame_offset(pcddb_track, cdio_get_track_lba(cdio, trackno));
+        cddb_track_set_frame_offset(pcddb_track, cdio_get_track_lba(cdio, static_cast<track_t>( trackno)));
         cddb_disc_add_track(cddb_disc, pcddb_track);
     }
 
@@ -384,7 +385,7 @@ bool AudioCDDemux::freedb_query(cddb_disc_t *&cddb_disc)
         {
             cddb_http_proxy_enable(cddb);
             cddb_set_http_proxy_server_name(cddb, sets.getString("Proxy/Host").toLocal8Bit());
-            cddb_set_http_proxy_server_port(cddb, sets.getUInt("Proxy/Port"));
+            cddb_set_http_proxy_server_port(cddb, static_cast<int>( sets.getUInt("Proxy/Port")));
             if (sets.getBool("Proxy/Login"))
             {
                 cddb_set_http_proxy_username(cddb, sets.getString("Proxy/User").toLocal8Bit());
@@ -451,7 +452,7 @@ Playlist::Entries AudioCDDemux::getTracks(const QString &_device)
             bool cddb_ok = useCDDB;
             for (trackNo = 1; trackNo <= numTracks; ++trackNo)
             {
-                chn = cdio_get_track_channels(cdio, trackNo);
+                chn = static_cast<unsigned char>( cdio_get_track_channels(cdio, trackNo));
                 if (!chn) //NRG format returns 0 - why ?
                     chn = 2;
                 if (chn != 2 && chn != 4)
@@ -460,7 +461,7 @@ Playlist::Entries AudioCDDemux::getTracks(const QString &_device)
                 if (useCDTEXT)
                     readCDText(trackNo);
                 isData = cdio_get_track_format(cdio, trackNo) != TRACK_FORMAT_AUDIO;
-                duration = CD_BLOCKSIZE / chn / (double)srate;
+                duration = static_cast<double>( CD_BLOCKSIZE / chn / srate);
                 numSectors = cdio_get_track_last_lsn(cdio, trackNo) - cdio_get_track_lsn(cdio, trackNo);
 
                 if (cddb_ok && (cddb_disc || (Title.isEmpty() && (cddb_ok = freedb_query(cddb_disc)))))

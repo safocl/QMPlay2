@@ -42,7 +42,7 @@ public:
     template<typename T>
     inline T getWithBounds(const QString &key, T min, T max, T def = T()) const
     {
-        return qBound(min, (T)get(key, def).toInt(), max);
+        return qBound(min, static_cast<T>(get(key, def).toInt()), max);
     }
 
     inline bool getBool(const QString &key, const bool def = bool()) const

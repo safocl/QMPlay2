@@ -30,7 +30,7 @@ class VideoThr final : public AVThread
     Q_OBJECT
 public:
     VideoThr(PlayClass &, VideoWriter *, const QStringList &pluginsName = {});
-    ~VideoThr();
+    ~VideoThr() override;
 
     void stop(bool terminate = false) override;
 
@@ -57,9 +57,9 @@ public:
     }
 
     void destroySubtitlesDecoder();
-    inline void setSubtitlesDecoder(Decoder *dec)
+    inline void setSubtitlesDecoder(Decoder *__dec)
     {
-        sDec = dec;
+        sDec = __dec;
     }
 
     bool setSpherical();

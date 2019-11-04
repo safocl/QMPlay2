@@ -31,7 +31,7 @@ class CDIODestroyTimer final : public QObject
     Q_OBJECT
 public:
     CDIODestroyTimer();
-    ~CDIODestroyTimer();
+    ~CDIODestroyTimer() override;
 
     Q_SIGNAL void setInstance(CdIo_t *_cdio, const QString &_device, unsigned _discID);
     CdIo_t *getInstance(const QString &_device, unsigned &_discID);
@@ -56,7 +56,7 @@ public:
 
     AudioCDDemux(Module &, CDIODestroyTimer &destroyTimer);
 private:
-    ~AudioCDDemux();
+    ~AudioCDDemux() override;
 
     bool set() override;
 

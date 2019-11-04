@@ -1,9 +1,9 @@
 #ifndef _ITDEFS_H_
 #define _ITDEFS_H_
 
-#ifdef __GNUC__
-    #include <windef.h>
-#endif
+//#ifdef __GNUC__
+//    #include <windef.h>
+//#endif
 
 namespace QMPlay2ModPlug {
 

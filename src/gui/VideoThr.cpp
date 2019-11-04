@@ -246,7 +246,7 @@ void VideoThr::run()
         skip = false;
         fast = 0;
 
-        if (frame_timer != -1.0)
+        if (/*frame_timer != -1.0*/ (std::max(frame_timer, -1.0) - std::min(frame_timer, -1.0)) > 0.00000000000001 )
             frame_timer = gettime();
     };
 
@@ -350,7 +350,7 @@ void VideoThr::run()
         {
             if (!sPacket.isEmpty())
             {
-                const QByteArray sPacketData = QByteArray::fromRawData((const char *)sPacket.data(), sPacket.size());
+                const QByteArray sPacketData = QByteArray::fromRawData(reinterpret_cast<const char *>(sPacket.data()), sPacket.size());
                 if (playC.ass->isASS())
                     playC.ass->addASSEvent(sPacketData);
                 else
@@ -410,7 +410,7 @@ void VideoThr::run()
         {
             VideoFrame decoded;
             QByteArray newPixelFormat;
-            const int bytes_consumed = dec->decodeVideo(packet, decoded, newPixelFormat, playC.flushVideo, skip ? ~0 : (fast >> 1));
+            const int bytes_consumed = dec->decodeVideo(packet, decoded, newPixelFormat, playC.flushVideo, skip ? static_cast<unsigned>(~0) : (fast >> 1));
             if (!newPixelFormat.isEmpty())
                 emit playC.pixelFormatUpdate(newPixelFormat);
             if (playC.flushVideo)
@@ -459,7 +459,7 @@ void VideoThr::run()
 
         if ((maybeFlush = packet.ts.isValid()))
         {
-            if (packet.sampleAspectRatio && lastSampleAspectRatio != -1.0 && !qFuzzyCompare(lastSampleAspectRatio, packet.sampleAspectRatio)) //Aspect ratio has been changed
+            if (packet.sampleAspectRatio > 0 && /*lastSampleAspectRatio != -1.0*/ (std::max(lastSampleAspectRatio, -1.0) - std::min(lastSampleAspectRatio, -1.0)) > 0.00000000000001  && !qFuzzyCompare(lastSampleAspectRatio, packet.sampleAspectRatio)) //Aspect ratio has been changed
             {
                 lastSampleAspectRatio = -1.0; //Needs to be updated later
                 emit playC.aRatioUpdate(packet.sampleAspectRatio); //Sets "lastSampleAspectRatio", because it calls "setARatio()";
@@ -511,7 +511,7 @@ void VideoThr::run()
 
             if (tmp_time >= 1.0)
             {
-                emit playC.updateBitrateAndFPS(-1, round((tmp_br << 3) / (tmp_time * 1000.0)), frames / tmp_time, canSkipFrames ? framesDisplayed / framesDisplayedTime : qQNaN(), interlaced);
+                emit playC.updateBitrateAndFPS(-1, static_cast<int>(round((tmp_br << 3) / (tmp_time * 1000.0))), frames / tmp_time, canSkipFrames ? framesDisplayed / framesDisplayedTime : qQNaN(), interlaced);
                 frames = tmp_br = framesDisplayed = 0;
                 tmp_time = framesDisplayedTime = 0.0;
             }
@@ -519,7 +519,7 @@ void VideoThr::run()
             if (canSkipFrames && !oneFrame)
             {
                 double sync_pts = audioCurrentPts;
-                if (sync_last_pts == sync_pts)
+                if (/*sync_last_pts == sync_pts*/ (std::max(sync_last_pts, sync_pts) - std::min(sync_last_pts, sync_pts)) < 0.0000000000001 )
                     sync_pts += gettime() - sync_timer;
                 else
                 {
@@ -566,7 +566,7 @@ void VideoThr::run()
                     {
                         if (diff <= 0.5)
                             delay *= 2.0;
-                        else if (!playC.skipAudioFrame)
+                        else if (playC.skipAudioFrame < 0.0000000000001)
                             playC.skipAudioFrame = diff;
                     }
                     lastAVDesync = true;
@@ -584,7 +584,7 @@ void VideoThr::run()
             }
 
             const bool hasFrame = !videoFrame.isEmpty();
-            const bool hasFrameTimer = (frame_timer != -1.0);
+            const bool hasFrameTimer = (/*frame_timer != -1.0*/ (std::max(frame_timer, -1.0) - std::min(frame_timer, -1.0)) > 0.0000000000001 );
             const bool updateFrameTimer = (hasFrame != hasFrameTimer);
             if (hasFrame)
             {
@@ -645,7 +645,7 @@ void VideoThr::screenshot(VideoFrame videoFrame)
 {
     ImgScaler imgScaler;
     const int aligned8W = Functions::aligned(W, 8);
-    if (imgScaler.create(videoFrame, aligned8W, H, (bool)hwAccelWriter))
+    if (imgScaler.create(videoFrame, aligned8W, H, hwAccelWriter != nullptr))
     {
         QImage img(aligned8W, H, QImage::Format_RGB32);
         bool ok = true;

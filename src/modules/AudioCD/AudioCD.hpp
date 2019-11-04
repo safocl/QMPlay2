@@ -29,7 +29,7 @@ class AudioCD final : public Module
     Q_OBJECT
 public:
     AudioCD();
-    ~AudioCD();
+    ~AudioCD() override;
 private:
     QList<Info> getModulesInfo(const bool) const override;
     void *createInstance(const QString &) override;

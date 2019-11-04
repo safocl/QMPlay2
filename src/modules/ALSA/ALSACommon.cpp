@@ -41,7 +41,7 @@ ALSACommon::DevicesList ALSACommon::getDevices()
                 int devIdx = -1;
                 while (!snd_ctl_pcm_next_device(ctl, &devIdx) && devIdx >= 0)
                 {
-                    snd_pcm_info_set_device(pcmInfo, devIdx);
+                    snd_pcm_info_set_device(pcmInfo, static_cast<unsigned>(devIdx));
                     snd_pcm_info_set_stream(pcmInfo, SND_PCM_STREAM_PLAYBACK);
                     if (snd_ctl_pcm_info(ctl, pcmInfo) >= 0)
                     {
@@ -56,7 +56,7 @@ ALSACommon::DevicesList ALSACommon::getDevices()
     }
 
     char **hints;
-    if (!snd_device_name_hint(-1, "pcm", (void ***)&hints)) //add "defaults.namehint.!showall on" to .asoundrc
+    if (!snd_device_name_hint(-1, "pcm", reinterpret_cast<void ***>(&hints))) //add "defaults.namehint.!showall on" to .asoundrc
     {
         char **n = hints;
         while (*n != nullptr)
@@ -87,7 +87,7 @@ ALSACommon::DevicesList ALSACommon::getDevices()
             }
             ++n;
         }
-        snd_device_name_free_hint((void **)hints);
+        snd_device_name_free_hint(reinterpret_cast<void **>(hints));
     }
 
     return devices;

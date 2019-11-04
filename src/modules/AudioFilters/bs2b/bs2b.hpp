@@ -42,20 +42,20 @@
 #define BS2B_MAXFEED 150  /* 15 dB */
 
 /* Normal crossfeed levels (Obsolete) */
-#define BS2B_HIGH_CLEVEL     ( ( uint32_t )700 | ( ( uint32_t )30 << 16 ) )
-#define BS2B_MIDDLE_CLEVEL   ( ( uint32_t )500 | ( ( uint32_t )45 << 16 ) )
-#define BS2B_LOW_CLEVEL      ( ( uint32_t )360 | ( ( uint32_t )60 << 16 ) )
+#define BS2B_HIGH_CLEVEL     ( static_cast< uint32_t >(700) | ( static_cast< uint32_t >(30 << 16 )) )
+#define BS2B_MIDDLE_CLEVEL   ( static_cast< uint32_t >(500) | ( static_cast< uint32_t >(45 << 16 ) ) )
+#define BS2B_LOW_CLEVEL      ( static_cast< uint32_t >(360) | ( static_cast< uint32_t >(60 << 16 ) ) )
 
 /* Easy crossfeed levels (Obsolete) */
-#define BS2B_HIGH_ECLEVEL    ( ( uint32_t )700 | ( ( uint32_t )60 << 16 ) )
-#define BS2B_MIDDLE_ECLEVEL  ( ( uint32_t )500 | ( ( uint32_t )72 << 16 ) )
-#define BS2B_LOW_ECLEVEL     ( ( uint32_t )360 | ( ( uint32_t )84 << 16 ) )
+#define BS2B_HIGH_ECLEVEL    ( static_cast< uint32_t >(700) | ( static_cast< uint32_t >(60 << 16 )) )
+#define BS2B_MIDDLE_ECLEVEL  ( static_cast< uint32_t >(500) | ( static_cast< uint32_t >(72 << 16 )) )
+#define BS2B_LOW_ECLEVEL     ( static_cast< uint32_t >(360) | ( static_cast< uint32_t >(84 << 16 )) )
 
 /* Default crossfeed levels */
 /* bs2b_set_level() */
-#define BS2B_DEFAULT_CLEVEL  ( ( uint32_t )700 | ( ( uint32_t )45 << 16 ) )
-#define BS2B_CMOY_CLEVEL     ( ( uint32_t )700 | ( ( uint32_t )60 << 16 ) )
-#define BS2B_JMEIER_CLEVEL   ( ( uint32_t )650 | ( ( uint32_t )95 << 16 ) )
+#define BS2B_DEFAULT_CLEVEL  ( static_cast< uint32_t >(700) | ( static_cast< uint32_t >(45 << 16 )) )
+#define BS2B_CMOY_CLEVEL     ( static_cast< uint32_t >(700) | ( static_cast< uint32_t >(60 << 16 )) )
+#define BS2B_JMEIER_CLEVEL   ( static_cast< uint32_t >(650) | ( static_cast< uint32_t >(95 << 16 )) )
 
 /* Default sample rate (Hz) */
 #define BS2B_DEFAULT_SRATE   44100

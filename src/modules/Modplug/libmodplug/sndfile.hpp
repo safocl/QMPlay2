@@ -8,9 +8,9 @@
 #ifndef __SNDFILE_H
 #define __SNDFILE_H
 
-#ifdef __GNUC__
-    #include <windef.h>
-#endif
+//#ifdef __GNUC__
+//    #include <windef.h>
+//#endif
 
 #include "stdafx.hpp"
 

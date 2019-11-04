@@ -32,7 +32,7 @@ class QMPLAY2SHAREDLIB_EXPORT NotifiesFreedesktop final : public QObject, public
 
 public:
     NotifiesFreedesktop();
-    ~NotifiesFreedesktop();
+    ~NotifiesFreedesktop() override;
 
 private:
     bool doNotify(const QString &title, const QString &message, const int ms, const QPixmap &pixmap, const int iconId = 0) override;

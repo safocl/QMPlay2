@@ -120,9 +120,9 @@ static void cross_feed_d( t_bs2bdp bs2bdp, double *sample )
 
 t_bs2bdp bs2b_open( void )
 {
-    t_bs2bdp bs2bdp = NULL;
+    t_bs2bdp bs2bdp = static_cast< t_bs2bdp >(malloc( sizeof( t_bs2bd ) ));
 
-    if( NULL != ( bs2bdp = ( t_bs2bdp )malloc( sizeof( t_bs2bd ) ) ) )
+    if( bs2bdp != nullptr )
     {
         memset( bs2bdp, 0, sizeof( t_bs2bd ) );
         bs2b_set_srate( bs2bdp, BS2B_DEFAULT_SRATE );
@@ -138,7 +138,7 @@ void bs2b_close( t_bs2bdp bs2bdp )
 
 void bs2b_set_level( t_bs2bdp bs2bdp, uint32_t level )
 {
-    if( NULL == bs2bdp ) return;
+    if( bs2bdp == nullptr ) return;
 
     if( level == bs2bdp->level ) return;
 
@@ -155,34 +155,34 @@ void bs2b_set_level_fcut( t_bs2bdp bs2bdp, int fcut )
 {
     uint32_t level;
 
-    if( NULL == bs2bdp ) return;
+    if( bs2bdp == nullptr ) return;
 
     level = bs2bdp->level;
     level &= 0xffff0000;
-    level |= ( uint32_t )fcut;
+    level |= static_cast< uint32_t >(fcut);
     bs2b_set_level( bs2bdp, level );
 } /* bs2b_set_level_fcut() */
 
 int bs2b_get_level_fcut( t_bs2bdp bs2bdp )
 {
-    return( ( int )( bs2bdp->level & 0xffff ) );
+    return( static_cast< int >( bs2bdp->level & 0xffff ) );
 } /* bs2b_get_level_fcut() */
 
 void bs2b_set_level_feed( t_bs2bdp bs2bdp, int feed )
 {
     uint32_t level;
 
-    if( NULL == bs2bdp ) return;
+    if( bs2bdp == nullptr ) return;
 
     level = bs2bdp->level;
-    level &= ( uint32_t )0xffff;
-    level |= ( uint32_t )feed << 16;
+    level &= static_cast< uint32_t >(0xffff);
+    level |= static_cast< uint32_t >(feed << 16);
     bs2b_set_level( bs2bdp, level );
 } /* bs2b_set_level_feed() */
 
 int bs2b_get_level_feed( t_bs2bdp bs2bdp )
 {
-    return( ( int )( ( bs2bdp->level & 0xffff0000 ) >> 16 ) );
+    return( static_cast< int >( ( bs2bdp->level & 0xffff0000 ) >> 16 ) );
 } /* bs2b_get_level_feed() */
 
 int bs2b_get_level_delay( t_bs2bdp bs2bdp )
@@ -199,7 +199,7 @@ int bs2b_get_level_delay( t_bs2bdp bs2bdp )
 
 void bs2b_set_srate( t_bs2bdp bs2bdp, uint32_t srate )
 {
-    if( NULL == bs2bdp ) return;
+    if( bs2bdp == nullptr ) return;
 
     if( srate == bs2bdp->srate ) return;
 
@@ -215,7 +215,7 @@ uint32_t bs2b_get_srate( t_bs2bdp bs2bdp )
 
 void bs2b_clear( t_bs2bdp bs2bdp )
 {
-    if( NULL == bs2bdp ) return;
+    if( bs2bdp == nullptr ) return;
     memset( &bs2bdp->lfs, 0, sizeof( bs2bdp->lfs ) );
 } /* bs2b_clear() */
 
@@ -225,7 +225,7 @@ int bs2b_is_clear( t_bs2bdp bs2bdp )
 
     while( loopv )
     {
-        if( ( ( char * )&bs2bdp->lfs )[ --loopv ] != 0 )
+        if( ( reinterpret_cast< char * >(&bs2bdp->lfs) )[ --loopv ] != 0 ) // it is correct ligic?
             return 0;
     }
 
@@ -244,14 +244,14 @@ uint32_t bs2b_runtime_version_int( void )
 
 void bs2b_cross_feed_f( t_bs2bdp bs2bdp, float *sample, int n )
 {
-    double sample_d[ 2 ];
+    double sample_d[ 2 ]; // it is correct logic, or maybe using sample array?
 
     if( n > 0 )
     {
         while( n-- )
         {
-            sample_d[ 0 ] = ( double )sample[ 0 ];
-            sample_d[ 1 ] = ( double )sample[ 1 ];
+            sample_d[ 0 ] = static_cast< double >(sample[ 0 ]);
+            sample_d[ 1 ] = static_cast< double >(sample[ 1 ]);
 
             cross_feed_d( bs2bdp, sample_d );
 
@@ -261,8 +261,8 @@ void bs2b_cross_feed_f( t_bs2bdp bs2bdp, float *sample, int n )
             if( sample_d[ 1 ] >  1.0 ) sample_d[ 1 ] =  1.0;
             if( sample_d[ 1 ] < -1.0 ) sample_d[ 1 ] = -1.0;
 
-            sample[ 0 ] = ( float )sample_d[ 0 ];
-            sample[ 1 ] = ( float )sample_d[ 1 ];
+            sample[ 0 ] = static_cast< float >(sample_d[ 0 ]);
+            sample[ 1 ] = static_cast< float >(sample_d[ 1 ]);
 
             sample += 2;
         } /* while */
